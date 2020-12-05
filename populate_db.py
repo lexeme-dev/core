@@ -38,7 +38,7 @@ def ingest_cluster_data(db, clusters_dir):
             filename = os.fsdecode(file)
             if filename.endswith(".json"):
                 file_path = os.path.join(clusters_dir, filename)
-                with open(file_path) as json_file:
+                with open(file_path, encoding="utf8") as json_file:
                     cluster_data = json.load(json_file)
                     new_record = Cluster(resource_id=cluster_data['id'],
                                          case_name=cluster_data['case_name'],
@@ -60,7 +60,7 @@ def ingest_opinion_data(db: SqliteDatabase, opinions_dir):
             filename = os.fsdecode(file)
             if filename.endswith(".json"):
                 file_path = os.path.join(opinions_dir, filename)
-                with open(file_path) as json_file:
+                with open(file_path, encoding="utf8") as json_file:
                     opinion_data = json.load(json_file)
                     cluster_uri = opinion_data['cluster']
                     cluster_id = int(cluster_uri.split('/')[-2])
