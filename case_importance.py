@@ -1,25 +1,24 @@
 import networkx as nx
-import csv
-import peewee as pw
+from db_models import db, Citation, Opinion
 
-citation_graph = nx.Graph()
+MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
-with open('data/citations.csv') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    line_count = 0
-    for row in csv_reader:
-        if line_count == 0:
-            line_count += 1
-        elif line_count < 100_000:
-            edge_weight = 1 / float(row[2])
-            citation_graph.add_edge(row[0], row[1], weight=edge_weight)
-            line_count += 1
-        else:
-            break
-    print(f'Processed {line_count} lines.')
+citation_graph = nx.DiGraph()
 
+db.connect()
+citations = [(c.citing_opinion, c.cited_opinion, {'weight': MAX_DEPTH / c.depth}) for c in Citation.select()]
+citation_graph.add_edges_from(citations)
 print(citation_graph.number_of_edges())
 print(citation_graph.number_of_nodes())
-centrality = nx.eigenvector_centrality(citation_graph)
-sorted_centrality = sorted((v, f"{c:0.2f}") for v, c in centrality.items())
-print("Done")
+
+centrality = nx.in_degree_centrality(citation_graph)
+top_opinions = [opinion_id for opinion_id, centrality_score in sorted(centrality.items(), key=lambda item: item[1], reverse=True)][:100]
+
+output_str = ""
+for i, opinion_id in enumerate(top_opinions):
+    try:
+        opinion = Opinion.get(Opinion.resource_id == opinion_id)
+        output_str += f'{i + 1}: {opinion.cluster.case_name}\n'
+    except:
+        pass
+print(output_str)
