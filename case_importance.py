@@ -1,19 +1,13 @@
 import networkx as nx
-from db_models import db, Citation, Opinion
+from db_models import db, Opinion
+from construct_graph import construct_graph
 
-MAX_DEPTH = 122  # To normalize lowest edge weight to 1
-
-citation_graph = nx.Graph()
-
-db.connect()
-citations = [(c.citing_opinion, c.cited_opinion, MAX_DEPTH / c.depth) for c in Citation.select()]
-citation_graph.add_weighted_edges_from(citations)
-print(citation_graph.number_of_edges())
-print(citation_graph.number_of_nodes())
+citation_graph = construct_graph()
 
 centrality = nx.eigenvector_centrality(citation_graph)
 top_opinions = [opinion_id for opinion_id, centrality_score in sorted(centrality.items(), key=lambda item: item[1], reverse=True)][:100]
 
+db.connect()
 output_str = ""
 for i, opinion_id in enumerate(top_opinions):
     try:
