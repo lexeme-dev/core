@@ -1,38 +1,11 @@
-from peewee import *
 import os
 import json
 import csv
-
-db = SqliteDatabase('data/db/scotus_data.db')
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db
+from db_models import db, Cluster, Opinion, Citation
+import peewee as pw
 
 
-class Cluster(BaseModel):
-    resource_id = IntegerField()
-    case_name = TextField()
-    citation_count = IntegerField()
-    cluster_uri = TextField()
-    docket_uri = TextField()
-
-
-class Opinion(BaseModel):
-    resource_id = IntegerField()
-    opinion_uri = TextField()
-    cluster_uri = TextField()
-    cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinions')
-
-
-class Citation(BaseModel):
-    citing_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citations')
-    cited_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citations')
-    depth = IntegerField()
-
-
-def create_db_tables(db: SqliteDatabase):
+def create_db_tables(db: pw.SqliteDatabase):
     db.create_tables([Cluster, Opinion, Citation])
 
 
@@ -58,7 +31,7 @@ def ingest_cluster_data(db, clusters_dir):
         Cluster.bulk_create(cluster_records, batch_size=100)
 
 
-def ingest_opinion_data(db: SqliteDatabase, opinions_dir):
+def ingest_opinion_data(db: pw.SqliteDatabase, opinions_dir):
     opinion_records = []
     directory = os.fsencode(opinions_dir)
     for file in os.listdir(directory):
@@ -104,9 +77,8 @@ def ingest_citation_data(db, citations_file):
 
 if __name__ == '__main__':
     db.connect()
-    # create_db_tables(db)
-    # ingest_cluster_data(db, r"data/scotus_clusters/")
-    # ingest_opinion_data(db, r"data/scotus_opinions/")
-    print('Done with clusters and opinions, beginning citations now.')
+    create_db_tables(db)
+    ingest_cluster_data(db, r"data/scotus_clusters/")
+    ingest_opinion_data(db, r"data/scotus_opinions/")
     ingest_citation_data(db, r"data/citations.csv")
     db.close()
