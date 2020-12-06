@@ -61,14 +61,12 @@ def ingest_citation_data(db, citations_file):
     citation_records = []
     with open(citations_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
-        line_count = 0
         for row in csv_reader:
             try:
                 integer_row = [int(cell) for cell in row]
                 if integer_row[0] in opinion_set and integer_row[1] in opinion_set:
                     new_record = Citation(citing_opinion=integer_row[0], cited_opinion=integer_row[1], depth=integer_row[2])
                     citation_records.append(new_record)
-                    line_count += 1
             except Exception as e:
                 print(f'Failure on row {row}: {e}')
         with db.atomic():
