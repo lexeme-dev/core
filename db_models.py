@@ -19,10 +19,10 @@ class Opinion(BaseModel):
     resource_id = IntegerField()
     opinion_uri = TextField()
     cluster_uri = TextField()
-    cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinions')
+    cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinion')
 
 
 class Citation(BaseModel):
-    citing_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citations')
-    cited_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citations')
+    citing_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citation', lazy_load=False)
+    cited_opinion = ForeignKeyField(Opinion, field='resource_id', backref='citation', lazy_load=False)
     depth = IntegerField()
