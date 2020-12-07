@@ -2,14 +2,13 @@ import os
 import json
 import csv
 from db_models import db, Cluster, Opinion, Citation
-import peewee as pw
 
 
-def create_db_tables(db: pw.SqliteDatabase):
+def create_db_tables():
     db.create_tables([Cluster, Opinion, Citation])
 
 
-def ingest_cluster_data(db, clusters_dir):
+def ingest_cluster_data(clusters_dir):
     cluster_records = []
     directory = os.fsencode(clusters_dir)
     for file in os.listdir(directory):
@@ -31,7 +30,7 @@ def ingest_cluster_data(db, clusters_dir):
         Cluster.bulk_create(cluster_records, batch_size=100)
 
 
-def ingest_opinion_data(db: pw.SqliteDatabase, opinions_dir):
+def ingest_opinion_data(opinions_dir):
     opinion_records = []
     directory = os.fsencode(opinions_dir)
     for file in os.listdir(directory):
@@ -54,7 +53,7 @@ def ingest_opinion_data(db: pw.SqliteDatabase, opinions_dir):
         Opinion.bulk_create(opinion_records, batch_size=100)
 
 
-def ingest_citation_data(db, citations_file):
+def ingest_citation_data(citations_file):
     # Since there's only ~65,000 opinions, it's feasible to just load all the IDs into memory to avoid making millions of DB queries.
     opinion_set = {o.resource_id for o in Opinion.select()}
 
@@ -75,8 +74,8 @@ def ingest_citation_data(db, citations_file):
 
 if __name__ == '__main__':
     db.connect()
-    create_db_tables(db)
-    ingest_cluster_data(db, r"data/scotus_clusters/")
-    ingest_opinion_data(db, r"data/scotus_opinions/")
-    ingest_citation_data(db, r"data/citations.csv")
+    create_db_tables()
+    ingest_cluster_data(r"data/scotus_clusters/")
+    ingest_opinion_data(r"data/scotus_opinions/")
+    ingest_citation_data(r"data/citations.csv")
     db.close()
