@@ -12,7 +12,7 @@ output_str = ""
 for i, opinion_id in enumerate(top_opinions):
     try:
         opinion = Opinion.get(Opinion.resource_id == opinion_id)
-        output_str += f'{i + 1}: {opinion.cluster.case_name}\n'
+        output_str += f'{i + 1}: {opinion.resource_id}, {opinion.cluster.case_name}\n'
     except:
         pass
 print(output_str)
