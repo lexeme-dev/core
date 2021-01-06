@@ -21,12 +21,13 @@ def construct_mat():
 mat, citing, cited = construct_mat()
 
 def nearest(resource_id):
+    # Both scipy.spatial.kdtrees take too mcuh memory
     global citing
+    global mat
     vec = mat[np.where(citing==resource_id)[0][0]]
-    vmat = np.array((vec,)*len(citing))
-    diff = vmat - mat
-    dist = np.linalg.norm(diff, axis=1)
-    idx = np.argsort(dist)
+    mat -= vec
+    mat = np.linalg.norm(mat, axis=1)
+    idx = np.argsort(mat)
     names = []
     for i, id_ in enumerate(idx[:50]):
         opinion = Opinion.get(Opinion.resource_id == citing[id_])
