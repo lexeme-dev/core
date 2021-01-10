@@ -1,10 +1,11 @@
 import networkx as nx
 from db_models import db, Citation, Opinion
+import pickle
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 
-def construct_graph():
+def construct_graph() -> nx.Graph:
     citation_graph = nx.Graph()
     db.connect()
     citations = [(c.citing_opinion, c.cited_opinion, 1 / c.depth) for c in Citation.select()]
