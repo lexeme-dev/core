@@ -1,6 +1,6 @@
 from peewee import *
 
-db = SqliteDatabase('data/db/scotus_data.db')
+db = SqliteDatabase('data/db/scotus_data2.db')
 
 class BaseModel(Model):
     class Meta:
@@ -13,6 +13,7 @@ class Cluster(BaseModel):
     citation_count = IntegerField()
     cluster_uri = TextField()
     docket_uri = TextField()
+    time = IntegerField()
 
 
 class Opinion(BaseModel):

@@ -1,6 +1,8 @@
 import os
 import json
 import csv
+import dateutil.parser
+from datetime import timezone
 from db_models import db, Cluster, Opinion, Citation
 
 
@@ -22,7 +24,8 @@ def ingest_cluster_data(clusters_dir):
                                          case_name=cluster_data['case_name'],
                                          cluster_uri=cluster_data['resource_uri'],
                                          docket_uri=cluster_data['docket'],
-                                         citation_count=cluster_data['citation_count'])
+                                         citation_count=cluster_data['citation_count'],
+                                         time=int(dateutil.parser.parse(cluster_data['date_filed']).replace(tzinfo=timezone.utc).timestamp()))
                     cluster_records.append(new_record)
         except:
             print(f'Failure on file {file}')
