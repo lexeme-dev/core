@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from db_models import Opinion
 
-resource_id = 103870
+resource_id = 2812209
 plt.figure(figsize=(20, 20), frameon=False)
 
 bbox = dict(alpha=0.25)
@@ -25,6 +25,7 @@ for i, opinion_id in enumerate(top_opinions):
         name_map[opinion.resource_id] = "".join(name_arr)
         output_str += f'{i + 1}: {opinion.resource_id}, {opinion.cluster.case_name}\n'
     except:
+        name_map[opinion_id] = "Unknown"
         pass
 print(output_str)
 top_opinion_names = [name_map[op] for op in top_opinions]

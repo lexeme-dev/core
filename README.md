@@ -7,4 +7,4 @@ Supreme Court precedent with a graph theoretic approach.
 
 ![Barnette](output/ego-plot-West%20Virginia%20Bd.%20of%20Ed..png)
 
-![Buckley](output/ego-plot-Buckley.png)
+![Obergefell](output/ego-plot-Obergefell.png)
