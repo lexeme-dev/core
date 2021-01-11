@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from db_models import Opinion
 
-resource_id = 109380
+resource_id = 103870
 plt.figure(figsize=(20, 20), frameon=False)
 
 bbox = dict(alpha=0.25)
