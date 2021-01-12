@@ -8,3 +8,5 @@ Supreme Court precedent with a graph theoretic approach.
 ![Barnette](output/ego-plot-West%20Virginia%20Bd.%20of%20Ed..png)
 
 ![Obergefell](output/ego-plot-Obergefell.png)
+
+![4000 important SCOTUS cases by RolX classification](output/important-cases-plot.png)
