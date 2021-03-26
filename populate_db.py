@@ -57,7 +57,8 @@ def ingest_opinion_data(opinions_dir):
 
 
 def ingest_citation_data(citations_file):
-    # Since there's only ~65,000 opinions, it's feasible to just load all the IDs into memory to avoid making millions of DB queries.
+    # Since there's only ~65,000 opinions, it's feasible to just load all the IDs into memory to avoid making
+    # millions of DB queries.
     opinion_set = {o.resource_id for o in Opinion.select()}
 
     citation_records = []
