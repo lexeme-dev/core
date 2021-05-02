@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, abort
-from db.db_models import Opinion, Cluster
+from db.db_models import Opinion, Cluster, Similarity
 from graph.citation_network import CitationNetwork
-from functools import lru_cache
-from helpers import top_n
 from playhouse.shortcuts import model_to_dict
 
 app = Flask(__name__)
@@ -18,13 +16,15 @@ def get_case(resource_id: int):
         abort(404)
 
 
-@lru_cache(maxsize=None)
 @app.route('/cases/<int:resource_id>/similar')
 def similar_cases(resource_id: int):
     get_case(resource_id)
-    similar_case_dict = top_n(citation_graph.similarity.most_similar_cases(resource_id), 25)
-    query = Opinion.select().join(Cluster).where(Opinion.resource_id << list(similar_case_dict))
-    similar_cases = sorted(query, key=lambda op: similar_case_dict[op.resource_id], reverse=True)
+    query = Similarity.select() \
+        .join(Opinion, on=Similarity.opinion_b).join(Cluster) \
+        .where(Similarity.opinion_a == resource_id) \
+        .order_by(Similarity.similarity_index.desc()) \
+        .limit(25)
+    similar_cases = [similarity_record.opinion_b for similarity_record in query]
     return jsonify(list(map(model_to_dict, similar_cases)))
 
 
