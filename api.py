@@ -21,6 +21,7 @@ def get_case(resource_id: int):
 @lru_cache(maxsize=None)
 @app.route('/cases/<int:resource_id>/similar')
 def similar_cases(resource_id: int):
+    get_case(resource_id)
     similar_case_dict = top_n(citation_graph.similarity.most_similar_cases(resource_id), 25)
     query = Opinion.select().join(Cluster).where(Opinion.resource_id << list(similar_case_dict))
     similar_cases = sorted(query, key=lambda op: similar_case_dict[op.resource_id], reverse=True)
