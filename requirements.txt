@@ -2,3 +2,4 @@ networkx
 peewee
 numpy
 graphrole
+flask
