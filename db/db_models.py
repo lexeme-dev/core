@@ -1,6 +1,8 @@
 from peewee import *
+import os
 
-db = SqliteDatabase('../data/db/scotus_data2.db')
+db_path = os.path.join(os.path.dirname(__name__), 'data/db/scotus_data2.db')
+db = SqliteDatabase(db_path)
 
 
 class BaseModel(Model):
