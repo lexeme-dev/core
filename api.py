@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, abort
 from db.db_models import Opinion, Cluster
 from graph.citation_network import CitationNetwork
 from functools import lru_cache
@@ -7,6 +7,15 @@ from playhouse.shortcuts import model_to_dict
 
 app = Flask(__name__)
 citation_graph = CitationNetwork()
+
+
+@app.route('/cases/<int:resource_id>')
+def get_case(resource_id: int):
+    try:
+        opinion = Opinion.get(resource_id=resource_id)
+        return model_to_dict(opinion)
+    except Opinion.DoesNotExist:
+        abort(404)
 
 
 @lru_cache(maxsize=None)
