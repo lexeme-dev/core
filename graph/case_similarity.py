@@ -1,10 +1,10 @@
 import networkx as nx
 from helpers import top_n, get_names_for_id_collection
-from construct_graph import CitationGraph
+import citation_network
 from typing import Set, Dict
 
 
-class CitationGraphSimilarity:
+class CitationNetworkSimilarity:
     network: nx.Graph
 
     def __init__(self, network):
@@ -36,7 +36,7 @@ class CitationGraphSimilarity:
 
 
 if __name__ == "__main__":
-    citation_graph = CitationGraph()
+    citation_graph = citation_network.CitationNetwork()
     # opinion = 118144  # Hurley v. Irish American
     # print(top_n(most_similar_cases(opinion), 25))
     ISSUE_1_2020_CASES = {103870, 107637, 105294, 117960, 117869, 118139, 4288403}

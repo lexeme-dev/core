@@ -1,11 +1,11 @@
-from construct_graph import CitationGraph
+from citation_network import CitationNetwork
 import networkx as nx
 import pickle
 from helpers import get_names_for_id_collection
 
 from graphrole import RecursiveFeatureExtractor, RoleExtractor
 
-citation_graph = CitationGraph.construct_network()
+citation_graph = CitationNetwork.construct_network()
 feature_extractor = RecursiveFeatureExtractor(citation_graph)
 features = feature_extractor.extract_features()
 role_extractor = RoleExtractor(n_roles=None)

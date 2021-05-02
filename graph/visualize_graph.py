@@ -1,4 +1,4 @@
-from construct_graph import CitationGraph
+from citation_network import CitationNetwork
 import networkx as nx
 import matplotlib.pyplot as plt
 from db.db_models import Opinion
@@ -8,7 +8,7 @@ plt.figure(figsize=(20, 20), frameon=False)
 
 bbox = dict(alpha=0.25)
 
-citation_graph = CitationGraph.construct_network()
+citation_graph = CitationNetwork.construct_network()
 roe_ego = nx.ego_graph(citation_graph, resource_id, 1)
 centrality = nx.eigenvector_centrality(roe_ego)
 top_opinions = [opinion_id for opinion_id, centrality_score in sorted(centrality.items(), key=lambda item: item[1], reverse=True)][:40]

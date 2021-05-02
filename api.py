@@ -1,5 +1,5 @@
 from flask import Flask
-from graph.construct_graph import construct_graph
+from graph.citation_network import construct_graph
 
 app = Flask(__name__)
 citation_graph = construct_graph()

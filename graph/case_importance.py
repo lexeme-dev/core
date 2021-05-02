@@ -1,8 +1,8 @@
 import networkx as nx
 from db.db_models import db, Opinion
-from construct_graph import CitationGraph
+from citation_network import CitationNetwork
 
-citation_graph = CitationGraph.construct_network()
+citation_graph = CitationNetwork.construct_network()
 
 centrality = nx.eigenvector_centrality_numpy(citation_graph)
 top_opinions = [opinion_id for opinion_id, centrality_score in sorted(centrality.items(), key=lambda item: item[1], reverse=True)][:100]

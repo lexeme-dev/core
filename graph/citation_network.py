@@ -1,17 +1,17 @@
 import networkx as nx
 from db.db_models import db, Citation
-from graph import case_similarity
+import case_similarity
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 
-class CitationGraph:
+class CitationNetwork:
     network: nx.Graph
-    similarity: case_similarity.CitationGraphSimilarity
+    similarity: case_similarity.CitationNetworkSimilarity
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
-        self.similarity = case_similarity.CitationGraphSimilarity(self.network)
+        self.similarity = case_similarity.CitationNetworkSimilarity(self.network)
 
     @staticmethod
     def construct_network(directed=False):
