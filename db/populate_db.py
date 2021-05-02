@@ -3,7 +3,7 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db_models import db, Cluster, Opinion, Citation
+from db_models import db, Cluster, Opinion, Citation, Similarity
 
 
 def create_db_tables():
