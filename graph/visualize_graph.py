@@ -1,7 +1,7 @@
 from construct_graph import construct_graph
 import networkx as nx
 import matplotlib.pyplot as plt
-from db_models import Opinion
+from db.db_models import Opinion
 
 resource_id = 100014
 plt.figure(figsize=(20, 20), frameon=False)

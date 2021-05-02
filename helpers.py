@@ -1,7 +1,7 @@
 import heapq
 from collections import OrderedDict
 from typing import Dict
-from db_models import db, Opinion, Cluster
+from db.db_models import Opinion
 
 
 def get_names_for_id_collection(collection):

@@ -3,12 +3,14 @@ import re
 
 CLURL = "https://www.courtlistener.com/api/rest/v3/search/?q={}&type=o"
 
+
 def _hardstrip(s):
     """
     Strips all whitespace, punctuation, and lowers.
     To compare cites.
     """
     return re.sub(r"[^\w]", "", s).lower()
+
 
 def cl_get(citation):
     """
@@ -31,6 +33,7 @@ def cl_get(citation):
         raise ValueError("{} not found in CourtListener! Closest match was {}".format(citation, case["caseName"]))
     return case
 
+
 def oyez_get(approx_term, docket_number):
     approx_term = int(approx_term)
     for at in [approx_term + i for i in (-1, 0, 1, -2, 2)]:
@@ -39,12 +42,14 @@ def oyez_get(approx_term, docket_number):
             return case
     return None
 
+
 def oyez_brief(*args):
     og = oyez_get(*args)
     if og:
         return {"facts": og["facts_of_the_case"], "question": og["question"], "conclusion": og["conclusion"]}
     else:
         return None
+
 
 def casebrief(citation):
     cl = cl_get(citation)

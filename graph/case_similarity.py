@@ -32,11 +32,12 @@ def most_similar_cases(opinion_id) -> Dict[str, float]:
     return similarity_value_dict
 
 
-citation_graph = construct_graph()
-# opinion = 118144  # Hurley v. Irish American
-# print(top_n(most_similar_cases(opinion), 25))
-ISSUE_1_2020_CASES = {103870, 107637, 105294, 117960, 117869, 118139, 4288403}
-ISSUE_1_2021_CASES = {103716, 106950, 108326, 117927, 118363, 118370, 799995, 809122}
-ISSUE_2_2021_CASES = {107082, 96230, 101076, 104943, 112478, 112786, 118144, 130160, 2812209, 799995}
+if __name__ == "__main__":
+    citation_graph = construct_graph()
+    # opinion = 118144  # Hurley v. Irish American
+    # print(top_n(most_similar_cases(opinion), 25))
+    ISSUE_1_2020_CASES = {103870, 107637, 105294, 117960, 117869, 118139, 4288403}
+    ISSUE_1_2021_CASES = {103716, 106950, 108326, 117927, 118363, 118370, 799995, 809122}
+    ISSUE_2_2021_CASES = {107082, 96230, 101076, 104943, 112478, 112786, 118144, 130160, 2812209, 799995}
 
-print("\n".join(get_names_for_id_collection(top_n(most_similar_to_group(ISSUE_1_2021_CASES), 25))))
+    print("\n".join(get_names_for_id_collection(top_n(most_similar_to_group(ISSUE_1_2021_CASES), 25))))
