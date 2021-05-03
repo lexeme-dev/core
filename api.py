@@ -1,8 +1,10 @@
-from flask import Flask, jsonify, abort, request
+from flask import Flask, abort, request
 from http import HTTPStatus
-from db.db_models import Opinion, Cluster, Similarity
+from db.db_models import Opinion
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
+from helpers import model_list_to_json
+from graph.case_search import CaseSearch
 
 app = Flask(__name__)
 citation_graph = CitationNetwork()
@@ -24,12 +26,11 @@ def similar_cases_to_group():
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
     similar_case_query = citation_graph.similarity.db_case_similarity(tuple(case_resource_ids))
     similar_cases = [similarity_record.opinion_b for similarity_record in similar_case_query]
-    return jsonify(list(map(model_to_dict, similar_cases)))
+    return model_list_to_json(similar_cases)
 
 
-@app.route('/search')
+@app.route('/cases/search')
 def search():
-    return {
-        "name": "Faiz",
-        "job": "Useful idiot"
-    }
+    search_query = request.args.get('query')
+    search_results = CaseSearch.search_cases(search_query)
+    return model_list_to_json(search_results)
