@@ -10,6 +10,13 @@ app = Flask(__name__)
 citation_graph = CitationNetwork()
 
 
+@app.after_request
+def configure_caching(response: Flask.response_class):
+    response.cache_control.max_age = 300
+    return response
+
+
+# TODO: All of these /cases/ routes can be refactored into their own Flask blueprint
 @app.route('/cases/<int:resource_id>')
 def get_case(resource_id: int):
     try:
