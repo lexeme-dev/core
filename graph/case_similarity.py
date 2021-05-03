@@ -1,7 +1,10 @@
+from functools import cache
 import networkx as nx
 from helpers import top_n, get_names_for_id_collection
 import graph.citation_network
 from typing import Set, Dict
+from db.db_models import Similarity, Opinion, Cluster
+from peewee import SQL, fn
 
 
 class CitationNetworkSimilarity:
@@ -34,6 +37,23 @@ class CitationNetworkSimilarity:
             similarity_value_dict[node] = self.jaccard_index(opinion_neighbors, other_node_edges)
         return similarity_value_dict
 
+    @staticmethod
+    @cache
+    def db_case_similarity(cases: tuple, max_cases=25):
+        """Instead of the network approach, uses cached similarity indexes in the database
+        to calculate similarity with a SQL query."""
+        similarity_alias = 'average_similarity'
+        query = Similarity \
+            .select(Opinion, Cluster, (fn.SUM(Similarity.similarity_index) / len(cases)).alias(similarity_alias)) \
+            .join(Opinion, on=Similarity.opinion_b) \
+            .join(Cluster) \
+            .where(Similarity.opinion_a << cases) \
+            .group_by(Similarity.opinion_b) \
+            .order_by(SQL(similarity_alias).desc()) \
+            .limit(max_cases)
+        print(query)
+        return query
+
 
 if __name__ == "__main__":
     citation_graph = graph.citation_network.CitationNetwork()
@@ -43,6 +63,9 @@ if __name__ == "__main__":
     ISSUE_1_2021_CASES = {103716, 106950, 108326, 117927, 118363, 118370, 799995, 809122}
     ISSUE_2_2021_CASES = {107082, 96230, 101076, 104943, 112478, 112786, 118144, 130160, 2812209, 799995}
 
-    print("\n".join(get_names_for_id_collection(
-        top_n(citation_graph.similarity.most_similar_to_group(ISSUE_1_2021_CASES), 25)
-    )))
+    similarity = citation_graph.similarity.db_case_similarity(list(ISSUE_1_2020_CASES))
+    a = list(similarity)
+    print(a)
+    # print("\n".join(get_names_for_id_collection(
+    #     top_n(citation_graph.similarity.most_similar_to_group(ISSUE_1_2021_CASES), 25)
+    # )))
