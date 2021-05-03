@@ -1,18 +1,8 @@
 import heapq
 from collections import OrderedDict
 from typing import Dict
-from db.db_models import Opinion
-
-
-def get_names_for_id_collection(collection):
-    names = []
-    for op_id in collection:
-        try:
-            name = Opinion.get(Opinion.resource_id == op_id).cluster.case_name
-            names.append(name)
-        except:
-            names.append("Unknown")
-    return names
+from dotenv import load_dotenv
+import os.path
 
 
 def top_n(value_dict: dict, n: int) -> Dict[str, float]:
@@ -25,3 +15,8 @@ def top_n(value_dict: dict, n: int) -> Dict[str, float]:
     for nth_largest in heapq.nlargest(n, collection):
         top_n_items[nth_largest[1]] = nth_largest[0]  # Reconstruct the dict
     return top_n_items
+
+
+def get_full_path(relative_project_path):
+    load_dotenv()
+    return os.path.join(os.getenv('PROJECT_PATH'), relative_project_path)
