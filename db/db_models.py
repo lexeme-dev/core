@@ -1,9 +1,9 @@
-from peewee import *
-import os
+from peewee import IntegerField, TextField, ForeignKeyField, FloatField
+from playhouse.sqlite_ext import SqliteExtDatabase, FTS5Model, SearchField
+from playhouse.signals import Model
+from helpers import get_full_path
 
-# TODO: The path to this db is all fucked up and has to be changed depending on where the main script is run. Fix it.
-db_path = os.path.join(os.path.dirname(__name__), 'data/db/scotus_data2.db')
-db = SqliteDatabase(db_path)
+db = SqliteExtDatabase(get_full_path('data/db/scotus_data2.db'))
 
 
 class BaseModel(Model):
@@ -14,9 +14,11 @@ class BaseModel(Model):
 class Cluster(BaseModel):
     resource_id = IntegerField()
     case_name = TextField()
+    reporter = TextField(null=True)
     citation_count = IntegerField()
     cluster_uri = TextField()
     docket_uri = TextField()
+    year = IntegerField()
     time = IntegerField()
 
 
@@ -37,3 +39,14 @@ class Similarity(BaseModel):
     opinion_a = ForeignKeyField(Opinion, field='resource_id', backref='citation')
     opinion_b = ForeignKeyField(Opinion, field='resource_id', backref='citation')
     similarity_index = FloatField()
+
+
+class SearchableCase(FTS5Model):
+    class Meta:
+        database = db
+
+    case_name = SearchField()
+    reporter = SearchField()
+    year = SearchField()
+    opinion_id = SearchField(unindexed=True)
+    cluster_id = SearchField(unindexed=True)
