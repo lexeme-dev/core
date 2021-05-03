@@ -6,9 +6,9 @@ class CaseSearch:
     @staticmethod
     @cache
     def search_cases(query, max_cases=25):
-        return SearchableCase.select(SearchableCase) \
-            .join(Opinion, on=(SearchableCase.opinion_id == Opinion.resource_id)) \
-            .join(Cluster) \
+        return Opinion.select() \
+            .join(SearchableCase, on=(SearchableCase.opinion_id == Opinion.resource_id)) \
+            .switch(Opinion).join(Cluster) \
             .where(SearchableCase.match(query)) \
             .order_by(Cluster.citation_count.desc()) \
             .limit(max_cases)

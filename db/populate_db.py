@@ -11,6 +11,7 @@ def create_db_tables():
     db.create_tables([Cluster, Opinion, Citation, SearchableCase])
 
 
+# TODO: Make this method select the reporter smarter (e.g. in order of U.S., S. Ct., etc.)
 def get_reporter(cluster_data):
     reporters = cluster_data.get('citations')
     if reporters is None or len(reporters) == 0:
