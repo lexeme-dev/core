@@ -96,7 +96,7 @@ def ingest_citation_data(citations_file):
 if __name__ == '__main__':
     db.connect()
     create_db_tables()
-    ingest_cluster_data(r"data/scotus_clusters/")
-    ingest_opinion_data(r"data/scotus_opinions/")
-    ingest_citation_data(r"data/citations.csv")
+    ingest_cluster_data(get_full_path(r"data/scotus_clusters/"))
+    ingest_opinion_data(get_full_path(r"data/scotus_opinions/"))
+    ingest_citation_data(get_full_path(r"data/citations.csv"))
     db.close()
