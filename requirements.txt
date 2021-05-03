@@ -3,3 +3,6 @@ peewee
 numpy
 flask
 pysqlite3
+python-dotenv
+python-dateutil
+requests
