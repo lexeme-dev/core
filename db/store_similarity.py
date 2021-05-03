@@ -13,4 +13,4 @@ if __name__ == "__main__":
         with db.atomic():
             Similarity.bulk_create(similarity_objects, batch_size=1000)
             num_nodes_completed += 1
-            print("{} nodes processed, {:.1%} ".format(num_nodes_completed, num_nodes_completed / total_num_nodes))
+            print("{} nodes processed, {:.1%} completed.".format(num_nodes_completed, num_nodes_completed / total_num_nodes))
