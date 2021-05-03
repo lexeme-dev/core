@@ -3,11 +3,24 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db_models import db, Cluster, Opinion, Citation, Similarity
+from db_models import db, Cluster, Opinion, Citation, SearchableCase
+from helpers import get_full_path
 
 
 def create_db_tables():
-    db.create_tables([Cluster, Opinion, Citation])
+    db.create_tables([Cluster, Opinion, Citation, SearchableCase])
+
+
+def get_reporter(cluster_data):
+    reporters = cluster_data.get('citations')
+    if reporters is None or len(reporters) == 0:
+        return None
+    reporter_to_use = reporters[0]
+    for reporter in reporters[1:]:
+        if reporter['reporter'] == 'U.S.':
+            reporter_to_use = reporter
+            break
+    return f"{reporter_to_use['volume']} {reporter_to_use['reporter']} {reporter_to_use['page']}"
 
 
 def ingest_cluster_data(clusters_dir):
@@ -20,12 +33,16 @@ def ingest_cluster_data(clusters_dir):
                 file_path = os.path.join(clusters_dir, filename)
                 with open(file_path, encoding="utf8") as json_file:
                     cluster_data = json.load(json_file)
+                    date_filed = dateutil.parser.parse(cluster_data['date_filed']).replace(tzinfo=timezone.utc)
+                    reporter = get_reporter(cluster_data)
                     new_record = Cluster(resource_id=cluster_data['id'],
                                          case_name=cluster_data['case_name'],
                                          cluster_uri=cluster_data['resource_uri'],
                                          docket_uri=cluster_data['docket'],
                                          citation_count=cluster_data['citation_count'],
-                                         time=int(dateutil.parser.parse(cluster_data['date_filed']).replace(tzinfo=timezone.utc).timestamp()))
+                                         reporter=reporter,
+                                         year=date_filed.year,
+                                         time=int(date_filed.timestamp()))
                     cluster_records.append(new_record)
         except:
             print(f'Failure on file {file}')
