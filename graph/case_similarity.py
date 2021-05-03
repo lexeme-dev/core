@@ -1,6 +1,5 @@
 from functools import cache
 import networkx as nx
-from helpers import top_n, get_names_for_id_collection
 import graph.citation_network
 from typing import Set, Dict
 from db.db_models import Similarity, Opinion, Cluster
@@ -51,7 +50,6 @@ class CitationNetworkSimilarity:
             .group_by(Similarity.opinion_b) \
             .order_by(SQL(similarity_alias).desc()) \
             .limit(max_cases)
-        print(query)
         return query
 
 
