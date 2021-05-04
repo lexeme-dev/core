@@ -1,4 +1,5 @@
-from flask import Flask, abort, request
+from flask import Flask, abort, request, jsonify
+from flask_cors import CORS
 from http import HTTPStatus
 from db.db_models import Opinion
 from graph.citation_network import CitationNetwork
@@ -7,6 +8,7 @@ from helpers import model_list_to_json
 from graph.case_search import CaseSearch
 
 app = Flask(__name__)
+CORS(app)
 citation_graph = CitationNetwork()
 
 
@@ -39,5 +41,8 @@ def similar_cases_to_group():
 @app.route('/cases/search')
 def search():
     search_query = request.args.get('query')
-    search_results = CaseSearch.search_cases(search_query)
+    max_cases = request.args.get('max_cases')
+    if search_query is None or len(search_query) == 0:
+        return jsonify([])
+    search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
     return model_list_to_json(search_results)
