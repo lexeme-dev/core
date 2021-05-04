@@ -2,6 +2,7 @@ networkx
 peewee
 numpy
 flask
+flask-cors
 pysqlite3
 python-dotenv
 python-dateutil
