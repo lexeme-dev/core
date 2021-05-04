@@ -10,3 +10,10 @@ Supreme Court precedent with a graph theoretic approach.
 ![Obergefell](output/ego-plot-Obergefell.png)
 
 ![4000 important SCOTUS cases by RolX classification](output/important-cases-plot.png)
+
+## Running the Server
+
+1. Set PROJECT_PATH to the github directory, using .env or standard bashrc
+2. Set FLASK_APP to api.py
+3. `git-lfs pull` the database
+4. `flask run`
