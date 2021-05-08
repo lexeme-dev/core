@@ -38,7 +38,7 @@ class CitationNetworkSimilarity:
 
     @staticmethod
     @cache
-    def db_case_similarity(cases: tuple, max_cases=25):
+    def db_case_similarity(cases: frozenset, max_cases=25):
         """Instead of the network approach, uses cached similarity indexes in the database
         to calculate similarity with a SQL query."""
         similarity_alias = 'average_similarity'
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     ISSUE_1_2021_CASES = {103716, 106950, 108326, 117927, 118363, 118370, 799995, 809122}
     ISSUE_2_2021_CASES = {107082, 96230, 101076, 104943, 112478, 112786, 118144, 130160, 2812209, 799995}
 
-    similarity = citation_graph.similarity.db_case_similarity(tuple(ISSUE_1_2020_CASES))
+    similarity = citation_graph.similarity.db_case_similarity(frozenset(ISSUE_1_2020_CASES))
     a = list(similarity)
     print("\n".join(sim.case_name for sim in similarity))
     # print("\n".join(get_names_for_id_collection(

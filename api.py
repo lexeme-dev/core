@@ -34,7 +34,7 @@ def similar_cases_to_group():
     max_cases = request.args.get('max_cases')
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    similar_case_query = citation_graph.similarity.db_case_similarity(tuple(case_resource_ids), max_cases)
+    similar_case_query = citation_graph.similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
     similar_cases = [similarity_record.opinion_b for similarity_record in similar_case_query]
     return model_list_to_json(similar_cases)
 
