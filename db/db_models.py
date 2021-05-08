@@ -41,10 +41,7 @@ class Similarity(BaseModel):
     similarity_index = FloatField()
 
 
-class SearchableCase(FTS5Model):
-    class Meta:
-        database = db
-
+class SearchableCase(BaseModel, FTS5Model):
     case_name = SearchField()
     reporter = SearchField()
     year = SearchField()
