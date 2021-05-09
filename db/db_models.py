@@ -41,9 +41,18 @@ class Similarity(BaseModel):
     similarity_index = FloatField()
 
 
-class SearchableCase(BaseModel, FTS5Model):
+class SearchableCase(FTS5Model):
+    class Meta:
+        database = db
+
     case_name = SearchField()
     reporter = SearchField()
     year = SearchField()
     opinion_id = SearchField(unindexed=True)
     cluster_id = SearchField(unindexed=True)
+
+
+class ClusterCitation(BaseModel):
+    citing_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
+    cited_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
+    depth = IntegerField()
