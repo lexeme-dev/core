@@ -29,7 +29,7 @@ def get_case(resource_id: int):
 
 
 @app.route('/cases/similar')
-def similar_cases_to_group():
+def get_similar_cases():
     case_resource_ids = request.args.getlist('cases')
     max_cases = request.args.get('max_cases')
     if len(case_resource_ids) < 1:
