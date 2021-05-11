@@ -9,6 +9,7 @@ from graph.case_search import CaseSearch
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
 from io import BufferedReader
+import oyez_brief
 
 app = Flask(__name__)
 CORS(app)
@@ -61,3 +62,9 @@ def search():
         return jsonify([])
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
     return model_list_to_json(search_results)
+
+@app.route('/oyez-brief/<int:resource_id>')
+def get_oyez_brief(resource_id: int):
+    if brief := oyez_brief.from_resource_id(resource_id):
+        return brief
+    abort(HTTPStatus.NOT_FOUND)

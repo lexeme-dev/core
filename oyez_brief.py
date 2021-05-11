@@ -13,7 +13,7 @@ def _hardstrip(s):
     """
     return re.sub(r"[^\w]", "", s).lower()
 
-def cl_get_from_resource_id(rid):
+def _cl_get_from_resource_id(rid):
     req = requests.get(CLID.format(rid))
     if not req:
         raise ValueError(f"Could not find resource id {rid} in CourtListener!")
@@ -27,7 +27,7 @@ def cl_get_from_resource_id(rid):
             case[k] = v
     return case
 
-def cl_get_from_cite(citation):
+def _cl_get_from_cite(citation):
     """
     Searches a citation and returns its data from courtlistener.
     Must be a full bluebook cite (with reporter)
@@ -49,7 +49,7 @@ def cl_get_from_cite(citation):
     return case
 
 
-def oyez_get(approx_term, docket_number):
+def _oyez_get(approx_term, docket_number):
     approx_term = int(approx_term)
     for at in [approx_term + i for i in (-1, 0, 1, -2, 2)]:
         case = requests.get(f"http://api.oyez.org/cases/{at}/{docket_number}").json()
@@ -58,26 +58,26 @@ def oyez_get(approx_term, docket_number):
     return None
 
 
-def oyez_brief(*args):
-    og = oyez_get(*args)
+def _oyez_brief(*args):
+    og = _oyez_get(*args)
     if og:
         return {"facts": og["facts_of_the_case"], "question": og["question"], "conclusion": og["conclusion"]}
     else:
         return None
 
 
-def casebrief_from_cite(citation):
-    cl = cl_get_from_cite(citation)
+def from_cite(citation):
+    cl = _cl_get_from_cite(citation)
     year = int(re.findall("\d{4}", citation)[-1])
     try:
-        return oyez_brief(year, cl["docketNumber"])
+        return _oyez_brief(year, cl["docketNumber"])
     except KeyError:
         return None
 
-def casebrief_from_resource_id(rid):
-    cl = cl_get_from_resource_id(rid)
+def from_resource_id(rid):
+    cl = _cl_get_from_resource_id(rid)
     try:
         year = int(re.findall("\d{4}", cl["date_filed"])[-1])
-        return oyez_brief(year, cl["docket_number"])
+        return _oyez_brief(year, cl["docket_number"])
     except KeyError:
         return None
