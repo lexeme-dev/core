@@ -12,6 +12,7 @@ def create_db_tables():
 
 
 # TODO: Make this method select the reporter smarter (e.g. in order of U.S., S. Ct., etc.)
+# TODO: Better yet, just store all available reporters (still in their their constituent parts) in a join table.
 def get_reporter(cluster_data):
     reporters = cluster_data.get('citations')
     if reporters is None or len(reporters) == 0:
