@@ -22,7 +22,7 @@ def configure_caching(response: Flask.response_class):
 
 
 # TODO: If necessary (because extraction and parsing is slow), we can implement this as a stateful background job.
-@app.route('/upload_pdf', methods=['POST'])
+@app.route('/pdf/upload', methods=['POST'])
 def upload_pdf():
     file = request.files.get('file')
     if file is None:
