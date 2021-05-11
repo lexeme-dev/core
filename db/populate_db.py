@@ -4,7 +4,7 @@ import csv
 import dateutil.parser
 from datetime import timezone
 from db_models import db, Cluster, Opinion, Citation, SearchableCase
-from helpers import get_full_path
+from helpers import get_full_path, format_reporter
 
 
 def create_db_tables():
@@ -12,6 +12,7 @@ def create_db_tables():
 
 
 # TODO: Make this method select the reporter smarter (e.g. in order of U.S., S. Ct., etc.)
+# TODO: Better yet, just store all available reporters (still in their their constituent parts) in a join table.
 def get_reporter(cluster_data):
     reporters = cluster_data.get('citations')
     if reporters is None or len(reporters) == 0:
@@ -21,7 +22,8 @@ def get_reporter(cluster_data):
         if reporter['reporter'] == 'U.S.':
             reporter_to_use = reporter
             break
-    return f"{reporter_to_use['volume']} {reporter_to_use['reporter']} {reporter_to_use['page']}"
+    return format_reporter(volume=reporter_to_use['volume'], reporter=reporter_to_use['reporter'],
+                           page=reporter_to_use['page'])
 
 
 def ingest_cluster_data(clusters_dir):
