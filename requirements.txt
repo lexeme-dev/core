@@ -8,4 +8,4 @@ python-dotenv
 python-dateutil
 requests
 pdftotext
-eyecite
+git+git://github.com/freelawproject/eyecite@master#egg=eyecite
