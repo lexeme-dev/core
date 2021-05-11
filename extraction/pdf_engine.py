@@ -1,5 +1,5 @@
 from typing import BinaryIO
-import pdfminer.high_level
+import pdftotext
 
 
 class PdfEngine:
@@ -9,4 +9,4 @@ class PdfEngine:
         self.file = file
 
     def get_text(self) -> str:
-        return pdfminer.high_level.extract_text(self.file)
+        return "\n\n".join(pdftotext.PDF(self.file))

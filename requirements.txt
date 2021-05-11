@@ -7,5 +7,5 @@ pysqlite3
 python-dotenv
 python-dateutil
 requests
-pdfminer.six
+pdftotext
 eyecite
