@@ -6,6 +6,8 @@ from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json
 from graph.case_search import CaseSearch
+from extraction.pdf_engine import PdfEngine
+from io import BufferedReader
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +18,15 @@ citation_graph = CitationNetwork()
 def configure_caching(response: Flask.response_class):
     response.cache_control.max_age = 300
     return response
+
+
+# TODO: If necessary (because extraction and parsing is slow), we can implement this as a stateful background job.
+@app.route('/upload_pdf', methods=['POST'])
+def upload_pdf():
+    file = request.files.get('file')
+    if file is None:
+        return "No file provided.", HTTPStatus.UNPROCESSABLE_ENTITY
+    return PdfEngine(BufferedReader(file)).get_text()
 
 
 # TODO: All of these /cases/ routes can be refactored into their own Flask blueprint
