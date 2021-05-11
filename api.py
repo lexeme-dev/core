@@ -7,6 +7,7 @@ from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json
 from graph.case_search import CaseSearch
 from extraction.pdf_engine import PdfEngine
+from extraction.citation_extractor import CitationExtractor
 from io import BufferedReader
 
 app = Flask(__name__)
@@ -26,7 +27,9 @@ def upload_pdf():
     file = request.files.get('file')
     if file is None:
         return "No file provided.", HTTPStatus.UNPROCESSABLE_ENTITY
-    return PdfEngine(BufferedReader(file)).get_text()
+    pdf_text = PdfEngine(BufferedReader(file)).get_text()
+    citations = list(CitationExtractor(pdf_text).get_opinion_citations())
+    return model_list_to_json(citations)
 
 
 # TODO: All of these /cases/ routes can be refactored into their own Flask blueprint
