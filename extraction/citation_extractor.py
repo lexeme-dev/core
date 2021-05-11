@@ -1,8 +1,8 @@
-from typing import Iterable, List, cast
+from typing import Iterable, List, cast, NamedTuple
 from db.db_models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
-import eyecite.models
+from eyecite.models import Resource as EyeciteResource
 
 
 class CitationExtractor:
@@ -11,8 +11,8 @@ class CitationExtractor:
     def __init__(self, unstructured_text: str):
         self.unstructured_text = unstructured_text
 
-    def get_citations(self) -> List[eyecite.models.Resource]:
-        return cast(List[eyecite.models.Resource],
+    def get_citations(self) -> List[EyeciteResource]:
+        return cast(List[EyeciteResource],
                     list(eyecite.resolve_citations(eyecite.get_citations(self.unstructured_text)).keys())
                     )  # :/ Yikes. The cast is to make type hints cooperate (eyecite's typing is incorrect).
 
