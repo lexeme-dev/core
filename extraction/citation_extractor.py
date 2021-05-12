@@ -2,7 +2,12 @@ from typing import Iterable, List, cast, NamedTuple
 from db.db_models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
-from eyecite.models import Resource as EyeciteResource
+from eyecite.models import (Resource as EyeciteResource, CitationBase)
+
+
+class ExtractedCitation(NamedTuple):
+    parenthetical: str
+    referenced_resource: EyeciteResource
 
 
 class CitationExtractor:
