@@ -1,4 +1,4 @@
-from typing import BinaryIO
+from typing import BinaryIO, Iterable
 import pdftotext
 
 
@@ -9,4 +9,6 @@ class PdfEngine:
         self.file = file
 
     def get_text(self) -> str:
-        return "\n\n".join(pdftotext.PDF(self.file))
+        pdf_pages_text: Iterable[str] = pdftotext.PDF(self.file)
+        # TODO: Make the newline replacement smarter to handle dashes etc.
+        return "\n".join(page_text.replace("\n", " ") for page_text in pdf_pages_text)
