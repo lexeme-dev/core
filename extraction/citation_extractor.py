@@ -1,13 +1,11 @@
 from typing import Iterable, List, cast, NamedTuple
+
+from playhouse.shortcuts import model_to_dict
+
 from db.db_models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
-from eyecite.models import (Resource as EyeciteResource, CitationBase)
-
-
-class ExtractedCitation(NamedTuple):
-    parenthetical: str
-    referenced_resource: EyeciteResource
+from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
 
 
 class CitationExtractor:
@@ -16,10 +14,28 @@ class CitationExtractor:
     def __init__(self, unstructured_text: str):
         self.unstructured_text = unstructured_text
 
-    def get_citations(self) -> Iterable[CitationBase]:
-        return eyecite.get_citations(self.unstructured_text)
+    def get_citations(self) -> List[CitationBase]:
+        return list(eyecite.get_citations(self.unstructured_text))
 
-    def get_opinion_citations(self) -> Iterable[Opinion]:
+    def get_extracted_citations(self) -> List[dict]:
+        cited_resources = eyecite.resolve_citations(self.get_citations())
+        reporter_resource_dict = {format_reporter(res.citation.volume, res.citation.reporter, res.citation.page): res
+                                  for res in cited_resources}
+        opinions = self.get_opinion_citations(cited_resources)
+        extracted_citations = []
+        for opinion in opinions:
+            parentheticals = []
+            for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
+                if isinstance(citation, CaseCitation) \
+                        and citation.parenthetical is not None \
+                        and citation.parenthetical.split()[0].endswith("ing"):  # Mega-hack to get descriptive parens
+                    parentheticals.append(citation.parenthetical)
+            opinion_dict = model_to_dict(opinion)
+            opinion_dict['parentheticals'] = parentheticals
+            extracted_citations.append(opinion_dict)
+        return extracted_citations
+
+    def get_opinion_citations(self, cited_resources=None) -> Iterable[Opinion]:
         """
         Returns Opinion objects (if found) for the cases cited in the given text. This method is *very* imperfect
         because it only checks the reporter, which may be missing, duplicate, or of the wrong kind.
@@ -28,7 +44,11 @@ class CitationExtractor:
 
         :return: An iterable of db_models.Opinion objects corresponding to cases cited by the given unstructured text.
         """
-        unique_resources = cast(List[EyeciteResource], list(eyecite.resolve_citations(self.get_citations()).keys()))
-        reporters_of_cited_cases = [format_reporter(volume=res.citation.volume, reporter=res.citation.reporter,
-                                                    page=res.citation.page) for res in unique_resources]
-        return Opinion.select().join(Cluster).where(Cluster.reporter << reporters_of_cited_cases)
+        if cited_resources is None:
+            cited_resources = eyecite.resolve_citations(self.get_citations())
+        unique_resources = cast(List[EyeciteResource], list(cited_resources.keys()))
+        reporters_of_cited_cases = {format_reporter(volume=res.citation.volume, reporter=res.citation.reporter,
+                                                    page=res.citation.page): i for i, res in
+                                    enumerate(unique_resources)}
+        return sorted(Opinion.select().join(Cluster).where(Cluster.reporter << list(reporters_of_cited_cases.keys())),
+                      key=lambda op: reporters_of_cited_cases[op.cluster.reporter])
