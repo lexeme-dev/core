@@ -16,10 +16,8 @@ class CitationExtractor:
     def __init__(self, unstructured_text: str):
         self.unstructured_text = unstructured_text
 
-    def get_citations(self) -> List[EyeciteResource]:
-        return cast(List[EyeciteResource],
-                    list(eyecite.resolve_citations(eyecite.get_citations(self.unstructured_text)).keys())
-                    )  # :/ Yikes. The cast is to make type hints cooperate (eyecite's typing is incorrect).
+    def get_citations(self) -> Iterable[CitationBase]:
+        return eyecite.get_citations(self.unstructured_text)
 
     def get_opinion_citations(self) -> Iterable[Opinion]:
         """
@@ -30,6 +28,7 @@ class CitationExtractor:
 
         :return: An iterable of db_models.Opinion objects corresponding to cases cited by the given unstructured text.
         """
+        unique_resources = cast(List[EyeciteResource], list(eyecite.resolve_citations(self.get_citations()).keys()))
         reporters_of_cited_cases = [format_reporter(volume=res.citation.volume, reporter=res.citation.reporter,
-                                                    page=res.citation.page) for res in self.get_citations()]
+                                                    page=res.citation.page) for res in unique_resources]
         return Opinion.select().join(Cluster).where(Cluster.reporter << reporters_of_cited_cases)
