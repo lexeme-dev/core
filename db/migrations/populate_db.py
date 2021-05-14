@@ -3,7 +3,7 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db_models import db, Cluster, Opinion, Citation, SearchableCase
+from db.db_models import db, Cluster, Opinion, Citation, SearchableCase
 from helpers import get_full_path, format_reporter
 
 

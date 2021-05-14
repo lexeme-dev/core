@@ -1,4 +1,4 @@
-from db_models import SearchableCase, Opinion, Cluster
+from db.db_models import SearchableCase, Opinion, Cluster
 
 if __name__ == '__main__':
     searchable_cases_dict = {}
