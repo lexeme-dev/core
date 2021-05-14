@@ -1,7 +1,5 @@
-from typing import Iterable, List, cast, NamedTuple
-
+from typing import Iterable, List, cast
 from playhouse.shortcuts import model_to_dict
-
 from db.db_models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
