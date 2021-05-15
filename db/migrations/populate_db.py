@@ -3,12 +3,12 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db.db_models import db, Cluster, Opinion, Citation, SearchableCase
+from db.db_models import db, Cluster, Opinion, Citation
 from helpers import get_full_path, format_reporter
 
 
 def create_db_tables():
-    db.create_tables([Cluster, Opinion, Citation, SearchableCase])
+    db.create_tables([Cluster, Opinion, Citation])
 
 
 # TODO: Make this method select the reporter smarter (e.g. in order of U.S., S. Ct., etc.)
