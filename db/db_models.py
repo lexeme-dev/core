@@ -1,4 +1,5 @@
 from peewee import IntegerField, TextField, ForeignKeyField, FloatField
+from playhouse.postgres_ext import TSVectorField
 from playhouse.sqlite_ext import FTS5Model, SearchField
 from playhouse.signals import Model
 from helpers import connect_to_database
@@ -20,6 +21,7 @@ class Cluster(BaseModel):
     docket_uri = TextField()
     year = IntegerField()
     time = IntegerField()
+    searchable_case_name = TSVectorField()
 
 
 class Opinion(BaseModel):
