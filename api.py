@@ -47,3 +47,18 @@ def search():
         return jsonify([])
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
     return model_list_to_json(search_results)
+
+@app.route('/oyez-brief/<int:resource_id>')
+def get_oyez_brief(resource_id: int):
+    if brief := oyez_brief.from_resource_id(resource_id):
+        return brief
+    abort(HTTPStatus.NOT_FOUND)
+
+@app.route('/cases/cluster')
+def get_case_clusters():
+    case_resource_ids = request.args.getlist('cases')
+    max_cases = request.args.get('eps')
+    if len(case_resource_ids) < 1:
+        return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
+    clusters = citation_graph.cluster(set(case_resource_ids))
+    return {k: list(v) for k, v in clusters.items()}
