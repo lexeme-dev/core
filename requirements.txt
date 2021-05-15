@@ -3,7 +3,7 @@ peewee
 numpy
 flask
 flask-cors
-pysqlite3
+psycopg2
 python-dotenv
 python-dateutil
 requests

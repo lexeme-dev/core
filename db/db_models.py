@@ -1,9 +1,9 @@
 from peewee import IntegerField, TextField, ForeignKeyField, FloatField
-from playhouse.sqlite_ext import SqliteExtDatabase, FTS5Model, SearchField
+from playhouse.sqlite_ext import FTS5Model, SearchField
 from playhouse.signals import Model
-from helpers import get_full_path
+from helpers import connect_to_database
 
-db = SqliteExtDatabase(get_full_path('data/db/scotus_data2.db'))
+db = connect_to_database()
 
 
 class BaseModel(Model):
