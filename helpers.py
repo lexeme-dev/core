@@ -34,8 +34,8 @@ def connect_to_database():
     return PostgresqlDatabase(db_name, user=db_username, password=db_password, host=db_host, port=db_port)
 
 
-def model_list_to_json(peewee_models: List[Model]):
-    return jsonify(list(map(model_to_dict, peewee_models)))
+def model_list_to_json(peewee_models: List[Model], **kwargs):
+    return jsonify(list(map(lambda model: model_to_dict(model, **kwargs), peewee_models)))
 
 
 def format_reporter(volume, reporter, page):
