@@ -7,3 +7,5 @@ pysqlite3
 python-dotenv
 python-dateutil
 requests
+pdftotext
+git+git://github.com/freelawproject/eyecite@master#egg=eyecite

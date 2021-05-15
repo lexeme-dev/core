@@ -28,3 +28,7 @@ def get_full_path(relative_project_path):
 
 def model_list_to_json(peewee_models: List[Model]):
     return jsonify(list(map(model_to_dict, peewee_models)))
+
+
+def format_reporter(volume, reporter, page):
+    return f"{volume} {reporter} {page}"

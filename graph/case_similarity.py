@@ -1,4 +1,5 @@
 from functools import cache
+import itertools
 import networkx as nx
 import graph.citation_network
 from typing import Set, Dict
@@ -27,6 +28,21 @@ class CitationNetworkSimilarity:
                 sum(self.jaccard_index(op_neighbors, other_node_edges) for op_neighbors in opinion_neighbor_sets) \
                 / len(opinion_neighbor_sets)
         return similarity_value_dict
+
+    def internal_similarity(self, opinion_ids: set) -> Dict[frozenset, float]:
+        """
+        Returns the internal similarity relationships in a group of cases.
+        """
+        neighbor_dict = {oi: set(self.network.neighbors(oi)) for oi in opinion_ids}
+        output_graph = nx.Graph()
+
+        for id_ in opinion_ids:
+            output_graph.add_node(int(id_))
+
+        for id_1, id_2 in itertools.combinations(opinion_ids, 2):
+            output_graph.add_edge(id_1, id_2, weight = \
+                self.jaccard_index(neighbor_dict[id_1], neighbor_dict[id_2]))
+        return output_graph
 
     def most_similar_cases(self, opinion_id) -> Dict[str, float]:
         opinion_neighbors = set(self.network.neighbors(opinion_id))
