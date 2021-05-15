@@ -71,9 +71,9 @@ def get_oyez_brief(resource_id: int):
 
 @app.route('/cases/cluster')
 def get_case_clusters():
-    case_resource_ids = request.args.getlist('cases')
-    max_cases = request.args.get('eps')
+    case_resource_ids = [int(c) for c in request.args.getlist('cases')]
+    eps = request.args.get('eps')
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    clusters = citation_graph.cluster(set(case_resource_ids))
-    return {k: list(v) for k, v in clusters.items()}
+    clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
+    return {int(k): list(v) for k, v in clusters.items()}
