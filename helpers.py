@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os.path
 from typing import List
 from flask import jsonify
-from peewee import Model
+from peewee import Model, PostgresqlDatabase
 from playhouse.shortcuts import model_to_dict
 
 
@@ -24,6 +24,14 @@ def top_n(value_dict: dict, n: int) -> Dict[str, float]:
 def get_full_path(relative_project_path):
     load_dotenv()
     return os.path.join(os.getenv('PROJECT_PATH'), relative_project_path)
+
+
+def connect_to_database():
+    load_dotenv()
+    db_host, db_name, db_username, db_password, db_port = (os.getenv('DB_HOST'), os.getenv('DB_NAME'),
+                                                           os.getenv('DB_USERNAME'), os.getenv('DB_PASSWORD'),
+                                                           os.getenv('DB_PORT'))
+    return PostgresqlDatabase(db_name, user=db_username, password=db_password, host=db_host, port=db_port)
 
 
 def model_list_to_json(peewee_models: List[Model]):

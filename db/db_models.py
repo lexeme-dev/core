@@ -1,9 +1,10 @@
 from peewee import IntegerField, TextField, ForeignKeyField, FloatField
-from playhouse.sqlite_ext import SqliteExtDatabase, FTS5Model, SearchField
+from playhouse.postgres_ext import TSVectorField
+from playhouse.sqlite_ext import FTS5Model, SearchField
 from playhouse.signals import Model
-from helpers import get_full_path
+from helpers import connect_to_database
 
-db = SqliteExtDatabase(get_full_path('data/db/scotus_data2.db'))
+db = connect_to_database()
 
 
 class BaseModel(Model):
@@ -20,6 +21,7 @@ class Cluster(BaseModel):
     docket_uri = TextField()
     year = IntegerField()
     time = IntegerField()
+    searchable_case_name = TSVectorField()
 
 
 class Opinion(BaseModel):
@@ -39,17 +41,6 @@ class Similarity(BaseModel):
     opinion_a = ForeignKeyField(Opinion, field='resource_id', backref='citation')
     opinion_b = ForeignKeyField(Opinion, field='resource_id', backref='citation')
     similarity_index = FloatField()
-
-
-class SearchableCase(FTS5Model):
-    class Meta:
-        database = db
-
-    case_name = SearchField()
-    reporter = SearchField()
-    year = SearchField()
-    opinion_id = SearchField(unindexed=True)
-    cluster_id = SearchField(unindexed=True)
 
 
 class ClusterCitation(BaseModel):
