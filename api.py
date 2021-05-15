@@ -63,8 +63,8 @@ def search():
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
     return model_list_to_json(search_results)
 
-@app.route('/oyez-brief/<int:resource_id>')
+@app.route('/cases/<int:resource_id>/oyez_brief')
 def get_oyez_brief(resource_id: int):
     if brief := oyez_brief.from_resource_id(resource_id):
-        return brief
+        return brief._asdict()
     abort(HTTPStatus.NOT_FOUND)
