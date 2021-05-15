@@ -75,5 +75,9 @@ def get_case_clusters():
     eps = request.args.get('eps')
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
+    clusters = None
+    if eps:
+        clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
+    else:
+        clusters = citation_graph.cluster(set(case_resource_ids))
     return {int(k): list(v) for k, v in clusters.items()}
