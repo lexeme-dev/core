@@ -59,7 +59,7 @@ class CitationNetworkSimilarity:
         to calculate similarity with a SQL query."""
         similarity_alias = 'average_similarity'
         query = Similarity \
-            .select(Opinion, Cluster, (fn.SUM(Similarity.similarity_index) / len(cases)).alias(similarity_alias)) \
+            .select(Similarity.opinion_b, (fn.SUM(Similarity.similarity_index) / len(cases)).alias(similarity_alias)) \
             .join(Opinion, on=Similarity.opinion_b) \
             .join(Cluster) \
             .where(Similarity.opinion_a << cases) \

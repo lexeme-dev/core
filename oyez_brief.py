@@ -1,6 +1,7 @@
+from collections import namedtuple
+from itertools import chain
 import requests
 import re
-from itertools import chain
 
 CLSEARCH = "https://www.courtlistener.com/api/rest/v3/search/?q={}&type=o"
 CLID = "https://www.courtlistener.com/api/rest/v3/opinions/{}"
@@ -13,7 +14,7 @@ def _hardstrip(s):
     """
     return re.sub(r"[^\w]", "", s).lower()
 
-def _cl_get_from_resource_id(rid):
+def _cl_get_from_resource_id(rid: int):
     req = requests.get(CLID.format(rid))
     if not req:
         raise ValueError(f"Could not find resource id {rid} in CourtListener!")
@@ -27,7 +28,7 @@ def _cl_get_from_resource_id(rid):
             case[k] = v
     return case
 
-def _cl_get_from_cite(citation):
+def _cl_get_from_cite(citation: str):
     """
     Searches a citation and returns its data from courtlistener.
     Must be a full bluebook cite (with reporter)
@@ -49,7 +50,7 @@ def _cl_get_from_cite(citation):
     return case
 
 
-def _oyez_get(approx_term, docket_number):
+def _oyez_get(approx_term: int, docket_number: str):
     approx_term = int(approx_term)
     for at in [approx_term + i for i in (-1, 0, 1, -2, 2)]:
         case = requests.get(f"http://api.oyez.org/cases/{at}/{docket_number}").json()
@@ -57,16 +58,16 @@ def _oyez_get(approx_term, docket_number):
             return case
     return None
 
-
-def _oyez_brief(*args):
-    og = _oyez_get(*args)
+OyezBrief = namedtuple("OyezBrief", ["facts", "question", "conclusion"])
+def _oyez_brief(approx_term: int, docket_number: str) -> OyezBrief:
+    og = _oyez_get(approx_term, docket_number)
     if og:
-        return {"facts": og["facts_of_the_case"], "question": og["question"], "conclusion": og["conclusion"]}
+        return OyezBrief(og["facts_of_the_case"], og["question"], og["conclusion"])
     else:
         return None
 
 
-def from_cite(citation):
+def from_cite(citation: str) -> OyezBrief:
     cl = _cl_get_from_cite(citation)
     year = int(re.findall("\d{4}", citation)[-1])
     try:
@@ -74,7 +75,7 @@ def from_cite(citation):
     except KeyError:
         return None
 
-def from_resource_id(rid):
+def from_resource_id(rid: int) -> OyezBrief:
     cl = _cl_get_from_resource_id(rid)
     try:
         year = int(re.findall("\d{4}", cl["date_filed"])[-1])

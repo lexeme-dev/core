@@ -3,9 +3,9 @@ peewee
 numpy
 flask
 flask-cors
-pysqlite3
+psycopg2
 python-dotenv
 python-dateutil
 requests
 pdftotext
-git+git://github.com/freelawproject/eyecite@master#egg=eyecite
+git+git://github.com/legal-network/eyecite@master#egg=eyecite
