@@ -1,16 +1,17 @@
-from functools import cache
+from peewee import fn
+from db.db_helpers import ts_match
 from db.db_models import Opinion, Cluster
 from string import whitespace
 
 
 class CaseSearch:
     @staticmethod
-    @cache
     def search_cases(query, max_cases=25):
-        query = CaseSearch.prepare_query(query)
-        return (Opinion.select()
+        search_text = CaseSearch.prepare_query(query)
+        return (Opinion.select(Opinion,
+                               fn.ts_headline(Cluster.case_display_name(), fn.to_tsquery(search_text)).alias('headline'))
                 .join(Cluster)
-                .where(Cluster.searchable_case_name.match(query))
+                .where(ts_match(Cluster.searchable_case_name, fn.to_tsquery(search_text)))
                 .order_by(Cluster.citation_count.desc())
                 .limit(max_cases))
 

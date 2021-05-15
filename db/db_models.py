@@ -1,6 +1,5 @@
-from peewee import IntegerField, TextField, ForeignKeyField, FloatField
+from peewee import IntegerField, TextField, ForeignKeyField, FloatField, fn
 from playhouse.postgres_ext import TSVectorField
-from playhouse.sqlite_ext import FTS5Model, SearchField
 from playhouse.signals import Model
 from helpers import connect_to_database
 
@@ -22,6 +21,11 @@ class Cluster(BaseModel):
     year = IntegerField()
     time = IntegerField()
     searchable_case_name = TSVectorField()
+
+    @staticmethod
+    def case_display_name():
+        """Plaintiff v. Defendant, Reporter (Year), written in query syntax."""
+        return fn.CONCAT(Cluster.case_name, fn.coalesce(fn.CONCAT(', ', Cluster.reporter)), ' (', Cluster.year, ')')
 
 
 class Opinion(BaseModel):
