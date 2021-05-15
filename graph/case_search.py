@@ -1,15 +1,13 @@
 from functools import cache
-from db.db_models import SearchableCase, Opinion, Cluster
+from db.db_models import Opinion, Cluster
 
 
 class CaseSearch:
     @staticmethod
     @cache
     def search_cases(query, max_cases=25):
-        return (case.opinion for case in
-                SearchableCase.search(query)
-                    .join(Opinion, on=Opinion.resource_id == SearchableCase.opinion_id)
-                    .join(Cluster)
-                    .select(Opinion)
-                    .order_by(Cluster.citation_count.desc())
-                    .limit(max_cases))
+        return (Opinion.select()
+                .join(Cluster)
+                .where(Cluster.searchable_case_name.match(query))
+                .order_by(Cluster.citation_count.desc())
+                .limit(max_cases))
