@@ -1,7 +1,7 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
-from db.db_models import Opinion
+from db.db_models import Opinion, DEFAULT_SERIALIZATION_ARGS
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json
@@ -38,7 +38,7 @@ def upload_pdf():
 def get_case(resource_id: int):
     try:
         opinion = Opinion.get(resource_id=resource_id)
-        return model_to_dict(opinion)
+        return model_to_dict(opinion, **DEFAULT_SERIALIZATION_ARGS)
     except Opinion.DoesNotExist:
         abort(HTTPStatus.NOT_FOUND)
 
@@ -61,7 +61,8 @@ def search():
     if search_query is None or len(search_query) == 0:
         return jsonify([])
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
-    return model_list_to_json(search_results)
+    return model_list_to_json(search_results, extra_attrs=['headline'])
+
 
 
 @app.route('/cases/<int:resource_id>/oyez_brief')

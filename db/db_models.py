@@ -52,3 +52,8 @@ class ClusterCitation(BaseModel):
     citing_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
     cited_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
     depth = IntegerField()
+
+
+DEFAULT_SERIALIZATION_ARGS = {
+    "exclude": [Cluster.searchable_case_name, ],
+}
