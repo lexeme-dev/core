@@ -30,7 +30,7 @@ def upload_pdf():
         return "No file provided.", HTTPStatus.UNPROCESSABLE_ENTITY
     pdf_text = PdfEngine(BufferedReader(file)).get_text()
     citations = list(CitationExtractor(pdf_text).get_extracted_citations())
-    return jsonify(citations)
+    return model_list_to_json(citations, extra_attrs=['parentheticals'])
 
 
 # TODO: All of these /cases/ routes can be refactored into their own Flask blueprint

@@ -1,5 +1,4 @@
 from typing import Iterable, List, cast
-from playhouse.shortcuts import model_to_dict
 from db.db_models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
@@ -15,7 +14,7 @@ class CitationExtractor:
     def get_citations(self) -> List[CitationBase]:
         return list(eyecite.get_citations(self.unstructured_text))
 
-    def get_extracted_citations(self) -> List[dict]:
+    def get_extracted_citations(self) -> List[Opinion]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
         reporter_resource_dict = {format_reporter(res.citation.groups['volume'], res.citation.groups['reporter'], res.citation.groups['page']): res
                                   for res in cited_resources}
@@ -27,9 +26,8 @@ class CitationExtractor:
                 if isinstance(citation, CaseCitation) \
                         and citation.metadata.parenthetical is not None:
                     parentheticals.append(citation.metadata.parenthetical)
-            opinion_dict = model_to_dict(opinion)
-            opinion_dict['parentheticals'] = parentheticals
-            extracted_citations.append(opinion_dict)
+            opinion.parentheticals = parentheticals
+            extracted_citations.append(opinion)
         return extracted_citations
 
     def get_opinion_citations(self, cited_resources=None) -> Iterable[Opinion]:
