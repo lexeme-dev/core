@@ -80,4 +80,4 @@ def get_case_clusters():
         clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
     else:
         clusters = citation_graph.cluster(set(case_resource_ids))
-    return {int(k): list(v) for k, v in clusters.items()}
+    return {k: list(v) for k, v in clusters.items()}
