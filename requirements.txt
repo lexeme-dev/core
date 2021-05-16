@@ -8,4 +8,6 @@ python-dotenv
 python-dateutil
 requests
 pdftotext
+sklearn
+numpy
 git+git://github.com/legal-network/eyecite@master#egg=eyecite

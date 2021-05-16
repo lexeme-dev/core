@@ -1,4 +1,7 @@
+from typing import Dict
 import networkx as nx
+import numpy as np
+from sklearn.cluster import DBSCAN
 from db.db_models import db, Citation
 import graph.case_similarity
 
@@ -24,3 +27,19 @@ class CitationNetwork:
         db.close()
         citation_network.add_weighted_edges_from(citations)
         return citation_network
+
+    def cluster(self, opinion_ids: set, eps=0.94) -> Dict[int, set]:
+        cases = opinion_ids
+        sgraph = self.similarity.internal_similarity(cases)
+        slaplacian = nx.laplacian_matrix(sgraph).toarray()
+        slaplacian += 1
+        sdist = slaplacian * (1 - np.identity(slaplacian.shape[0]))
+        labels = DBSCAN(eps=eps, min_samples=1, metric="precomputed") \
+                .fit(sdist) \
+                .labels_
+        output = {}
+        for c, l in zip(cases, labels):
+            if not l in output:
+                output[l] = set()
+            output[l].add(c)
+        return output

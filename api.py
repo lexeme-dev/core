@@ -68,3 +68,16 @@ def get_oyez_brief(resource_id: int):
     if brief := oyez_brief.from_resource_id(resource_id):
         return brief._asdict()
     abort(HTTPStatus.NOT_FOUND)
+
+@app.route('/cases/cluster')
+def get_case_clusters():
+    case_resource_ids = set([int(c) for c in request.args.getlist('cases')])
+    eps = request.args.get('eps')
+    if len(case_resource_ids) < 1:
+        return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
+    clusters = None
+    if eps:
+        clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
+    else:
+        clusters = citation_graph.cluster(set(case_resource_ids))
+    return {str(k): list(v) for k, v in clusters.items()}
