@@ -29,19 +29,16 @@ class CitationNetworkSimilarity:
                 / len(opinion_neighbor_sets)
         return similarity_value_dict
 
-    def internal_similarity(self, opinion_ids: set) -> Dict[frozenset, float]:
+    def internal_similarity(self, opinion_ids: set) -> nx.Graph:
         """
         Returns the internal similarity relationships in a group of cases.
         """
         neighbor_dict = {oi: set(self.network.neighbors(oi)) for oi in opinion_ids}
-        output_graph = nx.Graph()
+        output_graph = nx.complete_graph(opinion_ids)
 
-        for id_ in opinion_ids:
-            output_graph.add_node(int(id_))
-
-        for id_1, id_2 in itertools.combinations(opinion_ids, 2):
-            output_graph.add_edge(id_1, id_2, weight = \
-                self.jaccard_index(neighbor_dict[id_1], neighbor_dict[id_2]))
+        for id_1, id_2 in output_graph.edges:
+            output_graph[id_1][id_2]['weight'] = \
+                self.jaccard_index(neighbor_dict[id_1], neighbor_dict[id_2])
         return output_graph
 
     def most_similar_cases(self, opinion_id) -> Dict[str, float]:
