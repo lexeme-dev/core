@@ -25,8 +25,7 @@ class CitationExtractor:
             parentheticals = []
             for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
                 if isinstance(citation, CaseCitation) \
-                        and citation.metadata.parenthetical is not None \
-                        and citation.metadata.parenthetical.split()[0].endswith("ing"):  # Mega-hack to get descriptive parens
+                        and citation.metadata.parenthetical is not None:
                     parentheticals.append(citation.metadata.parenthetical)
             opinion_dict = model_to_dict(opinion)
             opinion_dict['parentheticals'] = parentheticals
