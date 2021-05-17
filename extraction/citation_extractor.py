@@ -17,7 +17,7 @@ class CitationExtractor:
 
     def get_extracted_citations(self) -> List[dict]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
-        reporter_resource_dict = {format_reporter(res.citation.volume, res.citation.reporter, res.citation.page): res
+        reporter_resource_dict = {format_reporter(res.citation.groups['volume'], res.citation.groups['reporter'], res.citation.groups['page']): res
                                   for res in cited_resources}
         opinions = self.get_opinion_citations(cited_resources)
         extracted_citations = []
@@ -25,9 +25,8 @@ class CitationExtractor:
             parentheticals = []
             for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
                 if isinstance(citation, CaseCitation) \
-                        and citation.parenthetical is not None \
-                        and citation.parenthetical.split()[0].endswith("ing"):  # Mega-hack to get descriptive parens
-                    parentheticals.append(citation.parenthetical)
+                        and citation.metadata.parenthetical is not None:
+                    parentheticals.append(citation.metadata.parenthetical)
             opinion_dict = model_to_dict(opinion)
             opinion_dict['parentheticals'] = parentheticals
             extracted_citations.append(opinion_dict)
@@ -45,8 +44,8 @@ class CitationExtractor:
         if cited_resources is None:
             cited_resources = eyecite.resolve_citations(self.get_citations())
         unique_resources = cast(List[EyeciteResource], list(cited_resources.keys()))
-        reporters_of_cited_cases = {format_reporter(volume=res.citation.volume, reporter=res.citation.reporter,
-                                                    page=res.citation.page): i for i, res in
+        reporters_of_cited_cases = {format_reporter(volume=res.citation.groups['volume'], reporter=res.citation.groups['reporter'],
+                                                    page=res.citation.groups['page']): i for i, res in
                                     enumerate(unique_resources)}
         return sorted(Opinion.select().join(Cluster).where(Cluster.reporter << list(reporters_of_cited_cases.keys())),
                       key=lambda op: reporters_of_cited_cases[op.cluster.reporter])
