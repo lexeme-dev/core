@@ -1,3 +1,4 @@
+from typing import List, Optional
 from peewee import IntegerField, TextField, ForeignKeyField, FloatField, fn
 from playhouse.postgres_ext import TSVectorField
 from playhouse.signals import Model
@@ -34,6 +35,8 @@ class Opinion(BaseModel):
     cluster_uri = TextField()
     html_text = TextField(null=True)
     cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinion')
+
+    parentheticals: Optional[List[str]]
 
 
 class Citation(BaseModel):
