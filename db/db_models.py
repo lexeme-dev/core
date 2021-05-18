@@ -1,6 +1,6 @@
-from peewee import IntegerField, TextField, ForeignKeyField, FloatField
+from typing import List, Optional
+from peewee import IntegerField, TextField, ForeignKeyField, FloatField, fn
 from playhouse.postgres_ext import TSVectorField
-from playhouse.sqlite_ext import FTS5Model, SearchField
 from playhouse.signals import Model
 from helpers import connect_to_database
 
@@ -23,6 +23,11 @@ class Cluster(BaseModel):
     time = IntegerField()
     searchable_case_name = TSVectorField()
 
+    @staticmethod
+    def case_display_name():
+        """Plaintiff v. Defendant, Reporter (Year), written in query syntax."""
+        return fn.CONCAT(Cluster.case_name, fn.coalesce(fn.CONCAT(', ', Cluster.reporter)), ' (', Cluster.year, ')')
+
 
 class Opinion(BaseModel):
     resource_id = IntegerField()
@@ -30,6 +35,8 @@ class Opinion(BaseModel):
     cluster_uri = TextField()
     html_text = TextField(null=True)
     cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinion')
+
+    parentheticals: Optional[List[str]]
 
 
 class Citation(BaseModel):
@@ -48,3 +55,8 @@ class ClusterCitation(BaseModel):
     citing_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
     cited_cluster = ForeignKeyField(Cluster, field='resource_id', backref='clustercitation', lazy_load=False)
     depth = IntegerField()
+
+
+DEFAULT_SERIALIZATION_ARGS = {
+    "exclude": [Cluster.searchable_case_name, ],
+}

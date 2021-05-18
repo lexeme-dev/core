@@ -34,8 +34,10 @@ def connect_to_database():
     return PostgresqlDatabase(db_name, user=db_username, password=db_password, host=db_host, port=db_port)
 
 
-def model_list_to_json(peewee_models: List[Model]):
-    return jsonify(list(map(model_to_dict, peewee_models)))
+def model_list_to_json(peewee_models: List[Model], **kwargs):
+    # TODO: Figure out a saner way to avoid these circular import problems
+    from db.db_models import DEFAULT_SERIALIZATION_ARGS  # Has to be here to avoid circular import errors
+    return jsonify(list(map(lambda model: model_to_dict(model, **DEFAULT_SERIALIZATION_ARGS, **kwargs), peewee_models)))
 
 
 def format_reporter(volume, reporter, page):
