@@ -16,7 +16,7 @@ class CitationExtractor:
 
     def get_extracted_citations(self) -> List[Opinion]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
-        reporter_resource_dict = {format_reporter(res.citation.groups['volume'], res.citation.groups['reporter'], res.citation.groups['page']): res
+        reporter_resource_dict = {format_reporter(res.citation.groups.get('volume'), res.citation.groups.get('reporter'), res.citation.groups.get('page')): res
                                   for res in cited_resources}
         opinions = self.get_opinion_citations(cited_resources)
         extracted_citations = []
@@ -42,8 +42,8 @@ class CitationExtractor:
         if cited_resources is None:
             cited_resources = eyecite.resolve_citations(self.get_citations())
         unique_resources = cast(List[EyeciteResource], list(cited_resources.keys()))
-        reporters_of_cited_cases = {format_reporter(volume=res.citation.groups['volume'], reporter=res.citation.groups['reporter'],
-                                                    page=res.citation.groups['page']): i for i, res in
+        reporters_of_cited_cases = {format_reporter(volume=res.citation.groups.get('volume'), reporter=res.citation.groups.get('reporter'),
+                                                    page=res.citation.groups.get('page')): i for i, res in
                                     enumerate(unique_resources)}
         return sorted(Opinion.select().join(Cluster).where(Cluster.reporter << list(reporters_of_cited_cases.keys())),
                       key=lambda op: reporters_of_cited_cases[op.cluster.reporter])
