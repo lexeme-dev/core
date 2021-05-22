@@ -31,7 +31,7 @@ class CitationNetwork:
         citation_network.add_weighted_edges_from(citations)
         return citation_network
 
-    def cluster(self, opinion_ids: set, eps=0.94) -> Dict[int, set]:
+    def dbscan_cluster(self, opinion_ids: set, eps=0.94) -> Dict[int, set]:
         sgraph = self.similarity.internal_similarity(opinion_ids)
         slaplacian = nx.laplacian_matrix(sgraph).toarray()
         slaplacian += 1
