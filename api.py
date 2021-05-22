@@ -82,5 +82,6 @@ def get_case_clusters():
     if eps:
         clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
     else:
-        clusters = citation_graph.cluster(set(case_resource_ids))
-    return {str(k): list(v) for k, v in clusters.items()}
+        clusters = citation_graph.spectral_cluster(set(case_resource_ids))
+    return {str(k): list(model_to_dict(Opinion.select().where(Opinion.resource_id == op_id).first(), **DEFAULT_SERIALIZATION_ARGS)
+                         for op_id in v) for k, v in clusters.items()}
