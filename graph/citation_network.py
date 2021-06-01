@@ -14,10 +14,12 @@ MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 class CitationNetwork:
     network: nx.Graph
     similarity: CaseSimilarity
+    recommendation: CaseRecommendation
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
         self.similarity = CaseSimilarity(self.network)
+        self.recommendation = CaseRecommendation(self.network)
 
     @staticmethod
     def construct_network(directed=False):
@@ -26,7 +28,7 @@ class CitationNetwork:
         else:
             citation_network = nx.Graph()
         db.connect()
-        citations = [(c.citing_opinion, c.cited_opinion, 1 / c.depth) for c in Citation.select()]
+        citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in Citation.select()]
         db.close()
         citation_network.add_weighted_edges_from(citations)
         return citation_network
