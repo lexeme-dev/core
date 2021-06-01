@@ -3,7 +3,6 @@ import networkx as nx
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.cluster import DBSCAN, SpectralClustering
-from sklearn.preprocessing import normalize
 from scipy.linalg import eigh
 from db.db_models import db, Citation
 import graph.case_similarity
@@ -46,13 +45,13 @@ class CitationNetwork:
             output[l].add(c)
         return output
 
-    def spectral_cluster(self, opinion_ids: set, n_clusters=None):
+    def spectral_cluster(self, opinion_ids: set, num_clusters=None):
         graph = self.similarity.internal_similarity(opinion_ids)
-        affinity_mat = normalize(nx.to_numpy_matrix(graph))
-        if n_clusters is None:
-            n_clusters = self.optimal_num_clusters(affinity_mat)
+        affinity_mat = nx.to_numpy_matrix(graph)
+        if num_clusters is None:
+            num_clusters = self.optimal_num_clusters(affinity_mat)
 
-        labels = SpectralClustering(n_clusters, affinity='precomputed', assign_labels='discretize').fit(affinity_mat).labels_
+        labels = SpectralClustering(num_clusters, affinity='precomputed', assign_labels='discretize').fit(affinity_mat).labels_
         output = {}
         for c, l in zip(opinion_ids, labels):
             if l not in output:
