@@ -5,18 +5,19 @@ from numpy.typing import ArrayLike
 from sklearn.cluster import DBSCAN, SpectralClustering
 from scipy.linalg import eigh
 from db.db_models import db, Citation
-import graph.case_similarity
+from graph.case_similarity import CaseSimilarity
+from graph.case_recommendation import CaseRecommendation
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 
 class CitationNetwork:
     network: nx.Graph
-    similarity: graph.case_similarity.CitationNetworkSimilarity
+    similarity: CaseSimilarity
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
-        self.similarity = graph.case_similarity.CitationNetworkSimilarity(self.network)
+        self.similarity = CaseSimilarity(self.network)
 
     @staticmethod
     def construct_network(directed=False):

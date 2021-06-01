@@ -1,12 +1,11 @@
 from functools import cache
 import networkx as nx
-import graph.citation_network
 from typing import Set, Dict
 from db.db_models import Similarity, Opinion, Cluster
 from peewee import SQL, fn
 
 
-class CitationNetworkSimilarity:
+class CaseSimilarity:
     network: nx.Graph
 
     def __init__(self, network):
@@ -66,7 +65,8 @@ class CitationNetworkSimilarity:
 
 
 if __name__ == "__main__":
-    citation_graph = graph.citation_network.CitationNetwork()
+    from graph.citation_network import CitationNetwork
+    citation_graph = CitationNetwork()
     # opinion = 118144  # Hurley v. Irish American
     # print(top_n(most_similar_cases(opinion), 25))
     ISSUE_1_2020_CASES = {103870, 107637, 105294, 117960, 117869, 118139, 4288403}
