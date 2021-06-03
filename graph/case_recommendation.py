@@ -43,4 +43,6 @@ class CaseRecommendation:
                 if num_nodes_met_threshold == NUM_VISITED_THRESHOLD:
                     break
             num_steps += walk_length
+        if opinion_id in node_freq_dict:
+            del node_freq_dict[opinion_id]
         return top_n(node_freq_dict, num_recommendations)
