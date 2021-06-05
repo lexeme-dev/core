@@ -25,10 +25,10 @@ class CaseRecommendation:
         Eksombatchai et. al (2018)'s Pixie recommendation algorithm for Pinterest.
 
         :param opinion_id: The opinion ID to get recommendations for (source for the random walks)
-        :param num_recommendations:
-        :param max_walk_length: Maximum number of steps
-        :param max_num_steps:
-        :return:
+        :param num_recommendations: The number of cases to return
+        :param max_walk_length: Maximum number of steps to perform in a single random walk
+        :param max_num_steps: The upper bound of random-walk steps to execute while computing recommendations
+        :return: A dictionary of the top num_recommendation opinion IDs and their visit values
         """
         node_freq_dict = {}
         num_steps = 0
