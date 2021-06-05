@@ -32,6 +32,8 @@ class CaseRecommendation:
                                                            max_walk_length=max_walk_length,
                                                            max_num_steps=curr_max_num_steps)
             for node, freq in curr_freq_dict.items():
+                if node in opinion_ids:
+                    continue
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
@@ -54,6 +56,8 @@ class CaseRecommendation:
         num_nodes_met_threshold = 0
         while num_steps < max_num_steps:  # Keep a constant worst-case bound on execution time
             random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=max_walk_length)
+            if random_walk_dest == opinion_id:
+                continue
             if random_walk_dest not in node_freq_dict:
                 node_freq_dict[random_walk_dest] = 0
             node_freq_dict[random_walk_dest] += 1
@@ -62,8 +66,6 @@ class CaseRecommendation:
                 if num_nodes_met_threshold == NUM_VISITED_THRESHOLD:
                     break
             num_steps += walk_length
-        if opinion_id in node_freq_dict:
-            del node_freq_dict[opinion_id]
         return top_n(node_freq_dict, num_recommendations)
 
     def input_case_weights(self, opinion_ids) -> Dict[str, float]:
