@@ -36,16 +36,3 @@ class RandomWalker:
         if node_info['start'] == node_info['end']:
             return source_node
         return self.network_edge_list.edge_list[randrange(node_info['start'], node_info['end'])]
-
-    def random_neighbor(self, source_node, weighted=True) -> str:
-        destination_weight_dict = self.get_edge_weight_dict(source_node)
-        destination_nodes = list(destination_weight_dict.keys())
-        prob_distribution = list(destination_weight_dict.values()) if weighted is True else [1 for _ in range(len(destination_nodes))]
-        np_prob_dist = np.array(prob_distribution, dtype='float')
-        np_prob_dist /= np_prob_dist.sum()
-        random_selection = np.random.choice(destination_nodes, 1, p=np_prob_dist)
-        return random_selection[0]
-
-    @cache
-    def get_edge_weight_dict(self, source_node) -> Dict[str, int]:
-        return {node: metadata['weight'] for node, metadata in self.network[source_node].items()}
