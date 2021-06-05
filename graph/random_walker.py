@@ -2,7 +2,7 @@ from functools import cache
 from typing import Dict
 import networkx as nx
 import numpy as np
-from random import randrange
+from random import randrange, random
 from graph.network_edge_list import NetworkEdgeList
 
 
@@ -35,6 +35,8 @@ class RandomWalker:
 
     def random_neighbor_fast(self, source_node):
         node_info = self.network_edge_list.node_metadata[source_node]
+        if node_info['start'] == node_info['end']:
+            return source_node
         return self.network_edge_list.edge_list[randrange(node_info['start'], node_info['end'])]
 
     def random_neighbor(self, source_node, weighted=True) -> str:
