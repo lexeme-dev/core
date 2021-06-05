@@ -56,11 +56,11 @@ def get_similar_cases():
 
 @app.route('/cases/recommendations')
 def get_recommended_cases():
-    case_resource_ids = request.args.getlist('cases')
+    case_resource_ids = list(map(int, request.args.getlist('cases')))
     max_cases = request.args.get('max_cases') or 10
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    recommendations = citation_graph.recommendation.recommendations_for_case(int(case_resource_ids[0]), max_cases)
+    recommendations = citation_graph.recommendation.recommendations(case_resource_ids, max_cases)
     recommended_opinions = sorted(
         Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
         key=lambda op: recommendations[op.resource_id],
