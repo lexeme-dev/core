@@ -12,12 +12,10 @@ class RandomWalker:
     Eksombatchai et al. (2018) and use offsets to randomly access. Current method is very slow and
     dynamically allocates neighbor dicts (bad bad bad)
     """
-    network: nx.Graph
     network_edge_list: NetworkEdgeList
 
-    def __init__(self, network):
-        self.network = network
-        self.network_edge_list = NetworkEdgeList()
+    def __init__(self, network_edge_list):
+        self.network_edge_list = network_edge_list
 
     def random_walk(self, source_node, max_walk_length) -> (str, int):
         """

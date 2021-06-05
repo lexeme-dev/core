@@ -7,19 +7,22 @@ from scipy.linalg import eigh
 from db.db_models import db, Citation
 from graph.case_similarity import CaseSimilarity
 from graph.case_recommendation import CaseRecommendation
+from graph.network_edge_list import NetworkEdgeList
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 
 class CitationNetwork:
     network: nx.Graph
+    network_edge_list: NetworkEdgeList
     similarity: CaseSimilarity
     recommendation: CaseRecommendation
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
+        self.network_edge_list = NetworkEdgeList()
         self.similarity = CaseSimilarity(self.network)
-        self.recommendation = CaseRecommendation(self.network)
+        self.recommendation = CaseRecommendation(self.network_edge_list)
 
     @staticmethod
     def construct_network(directed=False):

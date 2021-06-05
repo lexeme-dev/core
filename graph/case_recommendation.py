@@ -1,5 +1,5 @@
 from typing import Dict
-import networkx as nx
+from graph.network_edge_list import NetworkEdgeList
 from graph.random_walker import RandomWalker
 from helpers import top_n
 
@@ -11,12 +11,12 @@ NUM_VISITED_THRESHOLD = 25
 
 
 class CaseRecommendation:
-    network: nx.Graph
+    network_edge_list: NetworkEdgeList
     random_walker: RandomWalker
 
-    def __init__(self, network):
-        self.network = network
-        self.random_walker = RandomWalker(self.network)
+    def __init__(self, network_edge_list: NetworkEdgeList):
+        self.network_edge_list = network_edge_list
+        self.random_walker = RandomWalker(self.network_edge_list)
 
     def recommendations_for_case(self, opinion_id, num_recommendations,
                                  max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
