@@ -20,7 +20,6 @@ class CaseRecommendation:
         self.network_edge_list = network_edge_list
         self.random_walker = RandomWalker(self.network_edge_list)
 
-    @cache
     def recommendations(self, opinion_ids: frozenset, num_recommendations,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
