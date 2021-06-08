@@ -1,4 +1,4 @@
-from citation_network import CitationNetwork
+from graph.citation_network import CitationNetwork
 import networkx as nx
 import pickle
 from helpers import get_names_for_id_collection

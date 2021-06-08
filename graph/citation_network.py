@@ -5,8 +5,8 @@ from numpy.typing import ArrayLike
 from sklearn.cluster import DBSCAN, SpectralClustering
 from scipy.linalg import eigh
 from db.db_models import db, Citation
-from graph.case_similarity import CaseSimilarity
-from graph.case_recommendation import CaseRecommendation
+from algorithms.case_similarity import CaseSimilarity
+from algorithms.case_recommendation import CaseRecommendation
 from graph.network_edge_list import NetworkEdgeList
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1

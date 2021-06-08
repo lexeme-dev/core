@@ -1,4 +1,4 @@
-from citation_network import CitationNetwork
+from graph.citation_network import CitationNetwork
 import networkx as nx
 import matplotlib.pyplot as plt
 from db.db_models import Opinion

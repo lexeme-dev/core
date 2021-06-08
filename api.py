@@ -5,7 +5,7 @@ from db.db_models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json, model_list_to_dicts
-from graph.case_search import CaseSearch
+from algorithms.case_search import CaseSearch
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
 from io import BufferedReader
