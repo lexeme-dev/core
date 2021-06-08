@@ -30,6 +30,6 @@ class NetworkEdgeList:
                 node_neighbors[i] = neighbor
             start_idx = prev_index
             end_idx = start_idx + len(node_neighbors)
-            self.node_metadata[opinion.resource_id] = {'start': start_idx, 'end': end_idx}
+            self.node_metadata[opinion.resource_id] = {'start': start_idx, 'end': end_idx, 'length': end_idx - start_idx}
             self.edge_list[start_idx:end_idx] = node_neighbors
             prev_index = end_idx
