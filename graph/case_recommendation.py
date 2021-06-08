@@ -61,10 +61,11 @@ class CaseRecommendation:
             if random_walk_dest not in node_freq_dict:
                 node_freq_dict[random_walk_dest] = 0
             node_freq_dict[random_walk_dest] += 1
-            if node_freq_dict[random_walk_dest] == VISITED_FREQ_THRESHOLD:
-                num_nodes_met_threshold += 1
-                if num_nodes_met_threshold == NUM_VISITED_THRESHOLD:
-                    break
+            # Early stopping based on visit thresholds; disabled pending further testing
+            # if node_freq_dict[random_walk_dest] == VISITED_FREQ_THRESHOLD:
+            #     num_nodes_met_threshold += 1
+            #     if num_nodes_met_threshold == NUM_VISITED_THRESHOLD:
+            #         break
             num_steps += walk_length
         return top_n(node_freq_dict, num_recommendations)
 
@@ -90,7 +91,8 @@ class CaseRecommendation:
         denormalized_weights = {op_id: self.denormalized_case_weight(node_degree, max_degree, total_num_edges)
                                 for op_id, node_degree in node_degrees.items()}
         denormalized_weight_sum = sum(denormalized_weights.values())
-        return {op_id: node_weight / denormalized_weight_sum for op_id, node_weight in denormalized_weights.items()}
+        normalized_weights = {op_id: node_weight / denormalized_weight_sum for op_id, node_weight in denormalized_weights.items()}
+        return normalized_weights
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
         return (node_degree * (max_degree - log(node_degree))) / total_num_edges
