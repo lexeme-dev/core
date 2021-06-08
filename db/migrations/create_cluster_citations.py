@@ -3,7 +3,7 @@ For our current use cases, the Citation table can be kind of cumbersome because 
 individual opinions (plus, CourtListener's data about individual opinions is extremely unreliable), so
 I'm creating a new table based on the existing Citation data which directly uses Cluster IDs.
 """
-from db.db_models import *
+from db.models import *
 
 if __name__ == '__main__':
     # db.create_tables([ClusterCitation])

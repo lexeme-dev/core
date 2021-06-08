@@ -1,7 +1,7 @@
 from functools import cache
 import networkx as nx
 from typing import Set, Dict
-from db.db_models import Similarity, Opinion, Cluster
+from db.models import Similarity, Opinion, Cluster
 from peewee import SQL, fn
 
 

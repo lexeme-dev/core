@@ -1,5 +1,5 @@
 import networkx as nx
-from db.db_models import db, Opinion
+from db.models import db, Opinion
 from graph.citation_network import CitationNetwork
 
 citation_graph = CitationNetwork.construct_network()

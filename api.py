@@ -1,7 +1,7 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
-from db.db_models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
+from db.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json, model_list_to_dicts

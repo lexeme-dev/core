@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.cluster import DBSCAN, SpectralClustering
 from scipy.linalg import eigh
-from db.db_models import db, Citation
+from db.models import db, Citation
 from algorithms.case_similarity import CaseSimilarity
 from algorithms.case_recommendation import CaseRecommendation
 from graph.network_edge_list import NetworkEdgeList
