@@ -1,6 +1,6 @@
 from peewee import fn
-from db.db_helpers import ts_match
-from db.db_models import Opinion, Cluster
+from db.helpers import ts_match
+from db.models import Opinion, Cluster
 from string import whitespace
 
 

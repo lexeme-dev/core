@@ -1,4 +1,4 @@
-from db.db_models import db, Citation, Opinion
+from db.models import db, Citation, Opinion
 import numpy as np
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1

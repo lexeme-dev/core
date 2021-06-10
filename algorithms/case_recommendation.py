@@ -1,8 +1,7 @@
-from functools import cache
 from typing import Dict
 from math import sqrt, log
 from graph.network_edge_list import NetworkEdgeList
-from graph.random_walker import RandomWalker
+from algorithms.random_walker import RandomWalker
 from helpers import top_n
 
 MAX_NUM_STEPS = 100000

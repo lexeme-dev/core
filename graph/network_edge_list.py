@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain
-from db.db_models import *
+from db.models import *
 from peewee import prefetch
 
 

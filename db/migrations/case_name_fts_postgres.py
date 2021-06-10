@@ -1,5 +1,5 @@
 # We can no longer use SQLite's FTS5 as we move to PostgreSQL, so we're creating a new index and column here.
-from db.db_models import db
+from db.models import db
 
 
 def create_case_name_index():
