@@ -4,7 +4,7 @@ from http import HTTPStatus
 from db.db_models import Opinion, DEFAULT_SERIALIZATION_ARGS
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
-from helpers import model_list_to_json
+from helpers import model_list_to_json, model_list_to_dicts
 from graph.case_search import CaseSearch
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
@@ -74,13 +74,13 @@ def get_oyez_brief(resource_id: int):
 
 @app.route('/cases/cluster')
 def get_case_clusters():
-    case_resource_ids = set([int(c) for c in request.args.getlist('cases')])
-    eps = request.args.get('eps')
+    case_resource_ids = [int(c) for c in request.args.getlist('cases')]
+    num_clusters = int(request.args.get('num_clusters') or 0) or None
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    clusters = None
-    if eps:
-        clusters = citation_graph.cluster(set(case_resource_ids), eps=float(eps))
-    else:
-        clusters = citation_graph.cluster(set(case_resource_ids))
-    return {str(k): list(v) for k, v in clusters.items()}
+    clusters = citation_graph.spectral_cluster(set(case_resource_ids), num_clusters=num_clusters)
+    output_dict = {}
+    for cluster_name, opinion_ids in clusters.items():
+        opinion_models = Opinion.select().where(Opinion.resource_id << opinion_ids)
+        output_dict[str(cluster_name)] = model_list_to_dicts(opinion_models)
+    return output_dict

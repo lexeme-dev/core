@@ -58,5 +58,5 @@ class ClusterCitation(BaseModel):
 
 
 DEFAULT_SERIALIZATION_ARGS = {
-    "exclude": [Cluster.searchable_case_name, ],
+    "exclude": [Cluster.searchable_case_name, Opinion.html_text],
 }

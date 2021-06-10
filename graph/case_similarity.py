@@ -1,5 +1,4 @@
 from functools import cache
-import itertools
 import networkx as nx
 import graph.citation_network
 from typing import Set, Dict
