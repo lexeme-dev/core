@@ -23,7 +23,6 @@ class CaseRecommendation:
     def recommendations(self, opinion_ids: frozenset, num_recommendations,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
-        print(query_case_weights)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
             curr_max_num_steps = int(weight * max_num_steps)
@@ -74,7 +73,8 @@ class CaseRecommendation:
         their degree centralities.
 
         :param opinion_ids: A set of opinion IDs
-        :return:
+        :return: A dictionary with keys being the input case IDs and values being the relative weight to select them
+        to begin the random walk.
         """
         total_num_edges, max_degree = 0, 0
         node_degrees = {}
