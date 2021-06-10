@@ -5,18 +5,24 @@ from numpy.typing import ArrayLike
 from sklearn.cluster import DBSCAN, SpectralClustering
 from scipy.linalg import eigh
 from db.db_models import db, Citation
-import graph.case_similarity
+from graph.case_similarity import CaseSimilarity
+from graph.case_recommendation import CaseRecommendation
+from graph.network_edge_list import NetworkEdgeList
 
 MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 
 class CitationNetwork:
     network: nx.Graph
-    similarity: graph.case_similarity.CitationNetworkSimilarity
+    network_edge_list: NetworkEdgeList
+    similarity: CaseSimilarity
+    recommendation: CaseRecommendation
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
-        self.similarity = graph.case_similarity.CitationNetworkSimilarity(self.network)
+        self.network_edge_list = NetworkEdgeList()
+        self.similarity = CaseSimilarity(self.network)
+        self.recommendation = CaseRecommendation(self.network_edge_list)
 
     @staticmethod
     def construct_network(directed=False):
@@ -25,7 +31,7 @@ class CitationNetwork:
         else:
             citation_network = nx.Graph()
         db.connect()
-        citations = [(c.citing_opinion, c.cited_opinion, 1 / c.depth) for c in Citation.select()]
+        citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in Citation.select()]
         db.close()
         citation_network.add_weighted_edges_from(citations)
         return citation_network

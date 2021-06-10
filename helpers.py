@@ -1,8 +1,9 @@
 import heapq
+import os.path
+from math import inf
 from collections import OrderedDict
 from typing import Dict
 from dotenv import load_dotenv
-import os.path
 from typing import List
 from flask import jsonify
 from peewee import Model, PostgresqlDatabase
@@ -12,6 +13,8 @@ from playhouse.shortcuts import model_to_dict
 def top_n(value_dict: dict, n: int) -> Dict[str, float]:
     """Helper function to find the n highest-value keys in a dictionary.
     Runs in O(n+k) time for a dictionary with k entries."""
+    if n is None or n == inf:
+        return value_dict
     # Have to reformat the dict like this for heapq to cooperate.
     collection = [(value, key) for key, value in value_dict.items()]
     heapq.heapify(collection)

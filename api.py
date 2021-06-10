@@ -1,7 +1,7 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
-from db.db_models import Opinion, DEFAULT_SERIALIZATION_ARGS
+from db.db_models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json, model_list_to_dicts
@@ -54,6 +54,21 @@ def get_similar_cases():
     return model_list_to_json(similar_cases)
 
 
+@app.route('/cases/recommendations')
+def get_recommended_cases():
+    case_resource_ids = frozenset(map(int, request.args.getlist('cases')))
+    max_cases = int(request.args.get('max_cases') or 10)
+    if len(case_resource_ids) < 1:
+        return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
+    recommendations = citation_graph.recommendation.recommendations(case_resource_ids, max_cases)
+    recommended_opinions = sorted(
+        Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
+        key=lambda op: recommendations[op.resource_id],
+        reverse=True
+    )
+    return model_list_to_json(recommended_opinions)
+
+
 @app.route('/cases/search')
 def search():
     search_query = request.args.get('query')
@@ -62,7 +77,6 @@ def search():
         return jsonify([])
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
     return model_list_to_json(search_results, extra_attrs=['headline'])
-
 
 
 @app.route('/cases/<int:resource_id>/oyez_brief')
