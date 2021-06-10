@@ -55,11 +55,11 @@ def format_reporter(volume, reporter, page):
 NETWORK_CACHE_PATH = 'tmp/network_cache.pik'
 
 
-def get_citation_network(disable_caching=False):
+def get_citation_network(enable_caching=True):
     from graph.citation_network import CitationNetwork
 
     cache_file_path = get_full_path(NETWORK_CACHE_PATH)
-    if disable_caching:
+    if not enable_caching:
         return CitationNetwork()
     if os.path.exists(cache_file_path):
         try:
