@@ -2,9 +2,8 @@ from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
 from db.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
-from graph.citation_network import CitationNetwork
 from playhouse.shortcuts import model_to_dict
-from helpers import model_list_to_json, model_list_to_dicts
+from helpers import model_list_to_json, model_list_to_dicts, get_citation_network
 from algorithms.case_search import CaseSearch
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
@@ -13,7 +12,7 @@ import oyez_brief
 
 app = Flask(__name__)
 CORS(app)
-citation_graph = CitationNetwork()
+citation_graph = get_citation_network(enable_caching=True)
 
 
 @app.after_request
