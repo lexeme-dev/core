@@ -1,5 +1,6 @@
 from functools import cache
 import networkx as nx
+import numpy as np
 from typing import Set, Dict
 from db.models import Similarity, Opinion, Cluster
 from peewee import SQL, fn
@@ -15,6 +16,10 @@ class CaseSimilarity:
     @staticmethod
     def jaccard_index(n1_neighbors: Set[str], n2_neighbors: Set[str]) -> float:
         return len(n1_neighbors & n2_neighbors) / len(n1_neighbors | n2_neighbors)
+
+    @staticmethod
+    def jaccard_index_npy(n1_neighbors: np.array, n2_neighbors: np.array) -> float:
+        return len(np.intersect1d(n1_neighbors, n2_neighbors)) / len(np.union1d(n1_neighbors, n2_neighbors))
 
     def most_similar_to_group(self, opinion_ids: set) -> Dict[str, float]:
         opinion_neighbor_sets = [set(self.citation_network.network.neighbors(opinion_id)) for opinion_id in opinion_ids]
