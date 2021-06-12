@@ -49,7 +49,7 @@ def get_case(resource_id: int):
 @app.route('/cases/similar')
 def get_similar_cases():
     case_resource_ids = request.args.getlist('cases')
-    max_cases = request.args.get('max_cases')
+    max_cases = request.args.get('max_cases') or 25
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
     similar_case_query = similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
