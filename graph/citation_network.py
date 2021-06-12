@@ -2,26 +2,20 @@ import pickle
 import os
 import networkx as nx
 from db.models import db, Citation
-from algorithms.case_similarity import CaseSimilarity
-from algorithms.case_recommendation import CaseRecommendation
 from graph.network_edge_list import NetworkEdgeList
 from helpers import get_full_path
 
-MAX_DEPTH = 122  # To normalize lowest edge weight to 1
+CITATION_CSV_PATH = 'data/citation_list.csv'
 NETWORK_CACHE_PATH = 'tmp/network_cache.pik'
 
 
 class CitationNetwork:
     network: nx.Graph
     network_edge_list: NetworkEdgeList
-    similarity: CaseSimilarity
-    recommendation: CaseRecommendation
 
     def __init__(self, directed=False):
         self.network = self.construct_network(directed)
         self.network_edge_list = NetworkEdgeList()
-        self.similarity = CaseSimilarity(self.network)
-        self.recommendation = CaseRecommendation(self.network_edge_list)
 
     @staticmethod
     def get_citation_network(enable_caching=True):

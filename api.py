@@ -1,10 +1,11 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
+from graph import CitationNetwork
 from db.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from playhouse.shortcuts import model_to_dict
-from helpers import model_list_to_json, model_list_to_dicts, get_citation_network
-from algorithms.case_search import CaseSearch
+from helpers import model_list_to_json, model_list_to_dicts
+from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
 from io import BufferedReader
@@ -12,7 +13,10 @@ import oyez_brief
 
 app = Flask(__name__)
 CORS(app)
-citation_graph = get_citation_network(enable_caching=True)
+citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+similarity = CaseSimilarity(citation_network)
+clustering = CaseClustering(citation_network)
+recommendation = CaseRecommendation(citation_network)
 
 
 @app.after_request
@@ -48,7 +52,7 @@ def get_similar_cases():
     max_cases = request.args.get('max_cases')
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    similar_case_query = citation_graph.similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
+    similar_case_query = similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
     similar_cases = [similarity_record.opinion_b for similarity_record in similar_case_query]
     return model_list_to_json(similar_cases)
 
@@ -59,7 +63,7 @@ def get_recommended_cases():
     max_cases = int(request.args.get('max_cases') or 10)
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    recommendations = citation_graph.recommendation.recommendations(case_resource_ids, max_cases)
+    recommendations = recommendation.recommendations(case_resource_ids, max_cases)
     recommended_opinions = sorted(
         Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
         key=lambda op: recommendations[op.resource_id],
@@ -91,7 +95,7 @@ def get_case_clusters():
     num_clusters = int(request.args.get('num_clusters') or 0) or None
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    clusters = citation_graph.spectral_cluster(set(case_resource_ids), num_clusters=num_clusters)
+    clusters = clustering.spectral_cluster(set(case_resource_ids), num_clusters=num_clusters)
     output_dict = {}
     for cluster_name, opinion_ids in clusters.items():
         opinion_models = Opinion.select().where(Opinion.resource_id << opinion_ids)

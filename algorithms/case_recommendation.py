@@ -1,6 +1,6 @@
 from typing import Dict
 from math import sqrt, log
-from graph.network_edge_list import NetworkEdgeList
+from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
 from helpers import top_n
 
@@ -12,12 +12,12 @@ NUM_VISITED_THRESHOLD = 25
 
 
 class CaseRecommendation:
-    network_edge_list: NetworkEdgeList
+    citation_network: CitationNetwork
     random_walker: RandomWalker
 
-    def __init__(self, network_edge_list: NetworkEdgeList):
-        self.network_edge_list = network_edge_list
-        self.random_walker = RandomWalker(self.network_edge_list)
+    def __init__(self, citation_network: CitationNetwork):
+        self.citation_network = citation_network
+        self.random_walker = RandomWalker(self.citation_network)
 
     def recommendations(self, opinion_ids: frozenset, num_recommendations,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
