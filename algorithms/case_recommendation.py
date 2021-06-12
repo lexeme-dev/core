@@ -78,18 +78,18 @@ class CaseRecommendation:
         total_num_edges, max_degree = 0, 0
         node_degrees = {}
         for op_id in opinion_ids:
-            node_metadata = self.network_edge_list.node_metadata[op_id]
-            node_degree = node_metadata['end'] - node_metadata['start']
-            node_degrees[op_id] = node_degree
-            total_num_edges += node_degree
-            if node_degree > max_degree:
-                max_degree = node_degree
+            node_metadata = self.citation_network.network_edge_list.node_metadata[op_id]
+            node_degrees[op_id] = node_metadata.length
+            total_num_edges += node_metadata.length
+            if node_metadata.length > max_degree:
+                max_degree = node_metadata.length
         if total_num_edges == 0:
             return {op_id: 0 for op_id in opinion_ids}
         denormalized_weights = {op_id: self.denormalized_case_weight(node_degree, max_degree, total_num_edges)
                                 for op_id, node_degree in node_degrees.items()}
         denormalized_weight_sum = sum(denormalized_weights.values())
-        normalized_weights = {op_id: node_weight / denormalized_weight_sum for op_id, node_weight in denormalized_weights.items()}
+        normalized_weights = {op_id: node_weight / denormalized_weight_sum for op_id, node_weight in
+                              denormalized_weights.items()}
         return normalized_weights
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
