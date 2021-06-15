@@ -44,8 +44,6 @@ class CitationNetwork:
             citation_network = nx.DiGraph()
         else:
             citation_network = nx.Graph()
-        db.connect()
         citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in Citation.select()]
-        db.close()
         citation_network.add_weighted_edges_from(citations)
         return citation_network
