@@ -22,6 +22,8 @@ class CaseRecommendation:
     def recommendations(self, opinion_ids: frozenset, num_recommendations,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
+        average_case_year = self.average_year_of_cases(opinion_ids)
+        # print(query_case_weights)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
             curr_max_num_steps = int(weight * max_num_steps)
@@ -34,7 +36,13 @@ class CaseRecommendation:
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
-        return top_n(overall_node_freq_dict, num_recommendations)
+        # for key, value in overall_node_freq_dict.items():
+        #     curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
+        #     year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
+        #     overall_node_freq_dict[key] = self.relevance_adjusted_score(value, num_neighbors=curr_node_metadata.length)
+        top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
+        print(top_n_recommendations)
+        return top_n_recommendations
 
     def recommendations_for_case(self, opinion_id, num_recommendations,
                                  max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
@@ -50,19 +58,13 @@ class CaseRecommendation:
         """
         node_freq_dict = {}
         num_steps = 0
-        num_nodes_met_threshold = 0
         while num_steps < max_num_steps:  # Keep a constant worst-case bound on execution time
-            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=max_walk_length)
+            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5)
             if random_walk_dest == opinion_id:
                 continue
             if random_walk_dest not in node_freq_dict:
                 node_freq_dict[random_walk_dest] = 0
             node_freq_dict[random_walk_dest] += 1
-            # Early stopping based on visit thresholds; disabled pending further testing
-            # if node_freq_dict[random_walk_dest] == VISITED_FREQ_THRESHOLD:
-            #     num_nodes_met_threshold += 1
-            #     if num_nodes_met_threshold == NUM_VISITED_THRESHOLD:
-            #         break
             num_steps += walk_length
         return top_n(node_freq_dict, num_recommendations)
 
@@ -94,3 +96,25 @@ class CaseRecommendation:
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
         return (node_degree * (max_degree - log(node_degree))) / total_num_edges
+
+    def time_adjusted_score(self, unadjusted_score, year_distance) -> float:
+        pass
+
+    def obscurity_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
+        pass
+
+    def relevance_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
+        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
+        return unadjusted_score / log(floored_num_neighbors)
+
+    def landmark_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
+        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
+        return unadjusted_score * log(floored_num_neighbors)
+
+    def average_year_of_cases(self, nodes: frozenset) -> float:
+        sum_years, num_nodes = 0, 0
+        for node in nodes:
+            if (node_year := self.citation_network.network_edge_list.node_metadata[node].year) is not None:
+                sum_years += node_year
+                num_nodes += 1
+        return sum_years / num_nodes
