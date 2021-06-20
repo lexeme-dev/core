@@ -8,7 +8,7 @@ HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia
 
 
 def add_court_col():
-    court = TextField()
+    court = TextField(null=True)
     migrator = PostgresqlMigrator(db)
     migrate(
         migrator.add_column('cluster', 'court', court)
