@@ -16,6 +16,7 @@ class Cluster(BaseModel):
     resource_id = IntegerField()
     case_name = TextField()
     reporter = TextField(null=True)
+    court = TextField(null=True)
     citation_count = IntegerField()
     cluster_uri = TextField()
     docket_uri = TextField()
