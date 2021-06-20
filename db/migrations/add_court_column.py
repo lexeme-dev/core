@@ -16,7 +16,7 @@ def add_court_col():
 
 
 def populate_court():
-    Cluster.update({Cluster.court: "scotus"})
+    Cluster.update({Cluster.court: "scotus"}).execute()
 
 if __name__ == '__main__':
     add_court_col()
