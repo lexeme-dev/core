@@ -4,7 +4,7 @@ from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
 from helpers import top_n
 
-MAX_NUM_STEPS = 100000
+MAX_NUM_STEPS = 200000
 MAX_WALK_LENGTH = 5
 
 VISITED_FREQ_THRESHOLD = 100
@@ -22,8 +22,6 @@ class CaseRecommendation:
     def recommendations(self, opinion_ids: frozenset, num_recommendations,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
-        average_case_year = self.average_year_of_cases(opinion_ids)
-        # print(query_case_weights)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
             curr_max_num_steps = int(weight * max_num_steps)
@@ -36,10 +34,11 @@ class CaseRecommendation:
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
-        # for key, value in overall_node_freq_dict.items():
-        #     curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
-        #     year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
-        #     overall_node_freq_dict[key] = self.relevance_adjusted_score(value, num_neighbors=curr_node_metadata.length)
+        average_case_year = self.average_year_of_cases(opinion_ids)
+        for key, value in overall_node_freq_dict.items():
+            curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
+            year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
+            # overall_node_freq_dict[key] = self.relevance_adjusted_score(value, num_neighbors=curr_node_metadata.length)
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
         print(top_n_recommendations)
         return top_n_recommendations
