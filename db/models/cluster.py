@@ -16,6 +16,9 @@ class Court:
     CA8 = 'ca8'
     CA9 = 'ca9'
     CA10 = 'ca10'
+    CA11 = 'ca11'
+    CADC = 'cadc'
+    CAFC = 'cafc'
 
 
 class Cluster(BaseModel):
