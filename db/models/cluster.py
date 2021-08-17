@@ -1,6 +1,21 @@
+from enum import Enum
 from peewee import IntegerField, TextField, fn
 from playhouse.postgres_ext import TSVectorField
 from db.models import BaseModel
+
+
+class Court:
+    SCOTUS = 'scotus'
+    CA1 = 'ca1'
+    CA2 = 'ca2'
+    CA3 = 'ca3'
+    CA4 = 'ca4'
+    CA5 = 'ca5'
+    CA6 = 'ca6'
+    CA7 = 'ca7'
+    CA8 = 'ca8'
+    CA9 = 'ca9'
+    CA10 = 'ca10'
 
 
 class Cluster(BaseModel):
