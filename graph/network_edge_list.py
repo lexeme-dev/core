@@ -1,4 +1,4 @@
-from typing import NamedTuple, Dict
+from typing import NamedTuple, Dict, Iterable
 import numpy as np
 from itertools import chain
 import peewee
@@ -20,17 +20,28 @@ class NetworkEdgeList:
     edge_list: np.array
     node_metadata: Dict[int, NodeMetadata]
 
-    def __init__(self):
+    def __init__(self, scotus_only):
+        opinion_query = self.__init_queries(scotus_only)
+        self.__populate_edge_list(opinion_query)
+
+    def __init_queries(self, scotus_only):
         edge_list_size = Citation.select().count() * 2
         self.edge_list = np.empty(edge_list_size, dtype='int32')
         self.node_metadata = {}
-        prev_index = 0
-        opinion_query = Opinion.select(Opinion.resource_id, Cluster.year).join(Cluster,
-                                                                               join_type=peewee.JOIN.LEFT_OUTER)
-        citation_query = (Citation.select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)
-                          .order_by(Citation.citing_opinion_id, Citation.cited_opinion_id))
+        opinion_query = (Opinion.select(Opinion.resource_id, Cluster.year)
+                         .join(Cluster, join_type=peewee.JOIN.LEFT_OUTER))
+        if scotus_only:
+            opinion_query = opinion_query.where(Cluster.court == Court.SCOTUS)
+        citation_query = Citation.select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)
+        if scotus_only:
+            citation_query = Citation.where_court(citation_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
+        citation_query = citation_query.order_by(Citation.citing_opinion_id, Citation.cited_opinion_id)
         prefetch(opinion_query, citation_query)
-        for opinion in opinion_query:
+        return opinion_query
+
+    def __populate_edge_list(self, opinion_iter: Iterable[Opinion]):
+        prev_index = 0
+        for opinion in opinion_iter:
             num_neighbors = len(opinion.out_citations) + len(opinion.in_citations)
             node_neighbors = np.empty(num_neighbors, dtype='int32')
             for i, citation in enumerate(chain(opinion.out_citations, opinion.in_citations)):

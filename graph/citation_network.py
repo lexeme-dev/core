@@ -1,7 +1,7 @@
 import pickle
 import os
 import networkx as nx
-from db.models import db, Citation
+from db.models import Citation, Court
 from graph.network_edge_list import NetworkEdgeList
 from helpers import get_full_path
 
@@ -13,9 +13,9 @@ class CitationNetwork:
     network: nx.Graph
     network_edge_list: NetworkEdgeList
 
-    def __init__(self, directed=False):
-        self.network = self.construct_network(directed)
-        self.network_edge_list = NetworkEdgeList()
+    def __init__(self, directed=False, scotus_only=False):
+        self.network = self.construct_network(directed, scotus_only)
+        self.network_edge_list = NetworkEdgeList(scotus_only)
 
     @staticmethod
     def get_citation_network(enable_caching=True):
@@ -39,11 +39,14 @@ class CitationNetwork:
             return new_network
 
     @staticmethod
-    def construct_network(directed=False):
+    def construct_network(directed, scotus_only):
         if directed:
             citation_network = nx.DiGraph()
         else:
             citation_network = nx.Graph()
-        citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in Citation.select()]
+        citation_query = Citation.select()
+        if scotus_only:
+            citation_query = Citation.where_court(citation_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
+        citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in citation_query]
         citation_network.add_weighted_edges_from(citations)
         return citation_network
