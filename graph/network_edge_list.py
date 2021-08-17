@@ -25,8 +25,10 @@ class NetworkEdgeList:
         self.edge_list = np.empty(edge_list_size, dtype='int32')
         self.node_metadata = {}
         prev_index = 0
-        opinion_query = Opinion.select(Opinion.resource_id, Cluster.year).join(Cluster, join_type=peewee.JOIN.LEFT_OUTER)
-        citation_query = Citation.select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)
+        opinion_query = Opinion.select(Opinion.resource_id, Cluster.year).join(Cluster,
+                                                                               join_type=peewee.JOIN.LEFT_OUTER)
+        citation_query = (Citation.select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)
+                          .order_by(Citation.citing_opinion_id, Citation.cited_opinion_id))
         prefetch(opinion_query, citation_query)
         for opinion in opinion_query:
             num_neighbors = len(opinion.out_citations) + len(opinion.in_citations)
