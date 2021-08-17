@@ -20,7 +20,7 @@ def top_n(value_dict: dict, n: int) -> Dict[str, float]:
     collection = [(value, key) for key, value in value_dict.items()]
     heapq.heapify(collection)
     top_n_items = OrderedDict()
-    for nth_largest in heapq.nlargest(n, collection):
+    for nth_largest in heapq.nlargest(min(n, len(collection)), collection):
         top_n_items[nth_largest[1]] = nth_largest[0]  # Reconstruct the dict
     return top_n_items
 
