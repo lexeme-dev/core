@@ -1,21 +1,12 @@
-from functools import cache
-from typing import Dict
-import networkx as nx
-import numpy as np
-from random import randrange, random
-from graph.network_edge_list import NetworkEdgeList
+from random import randrange
+from graph import CitationNetwork
 
 
 class RandomWalker:
-    """
-    Future potential optimization: load all edges into a single array as described in Section 3.3 of
-    Eksombatchai et al. (2018) and use offsets to randomly access. Current method is very slow and
-    dynamically allocates neighbor dicts (bad bad bad)
-    """
-    network_edge_list: NetworkEdgeList
+    citation_network: CitationNetwork
 
-    def __init__(self, network_edge_list):
-        self.network_edge_list = network_edge_list
+    def __init__(self, citation_network):
+        self.citation_network = citation_network
 
     def random_walk(self, source_node, max_walk_length) -> (str, int):
         """
@@ -32,7 +23,7 @@ class RandomWalker:
         return curr_node, walk_length
 
     def random_neighbor_fast(self, source_node):
-        node_info = self.network_edge_list.node_metadata[source_node]
-        if node_info['start'] == node_info['end']:
+        node_info = self.citation_network.network_edge_list.node_metadata[source_node]
+        if node_info.start == node_info.end:
             return source_node
-        return self.network_edge_list.edge_list[randrange(node_info['start'], node_info['end'])]
+        return self.citation_network.network_edge_list.edge_list[randrange(node_info.start, node_info.end)]
