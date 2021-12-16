@@ -2,7 +2,7 @@ from functools import cache
 import networkx as nx
 import numpy as np
 from typing import Set, Dict
-from db.models import Similarity, Opinion, Cluster
+from db.peewee.models import Similarity, Opinion, Cluster
 from peewee import SQL, fn
 from graph import CitationNetwork
 

@@ -1,6 +1,6 @@
 # For some god-forsaken reason, when I migrated the database it didn't set the id columns as serial, so
 # now we're just gonna do it manually :/
-from db.models import db
+from db.peewee.models import db
 
 
 def set_primary_keys_to_serial():

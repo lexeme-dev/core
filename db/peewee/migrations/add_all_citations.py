@@ -1,7 +1,7 @@
 import csv
 
 from peewee import chunked
-from db.models import *
+from db.peewee.models import *
 from helpers import get_full_path
 
 

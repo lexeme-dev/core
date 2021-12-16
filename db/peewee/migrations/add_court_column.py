@@ -1,8 +1,5 @@
-import os
-import json
 from playhouse.migrate import *
-from db.models import *
-from helpers import get_full_path
+from db.peewee.models import *
 
 HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia', 'html_anon_2020', 'plain_text']
 

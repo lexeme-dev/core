@@ -1,5 +1,5 @@
 from peewee import ForeignKeyField, IntegerField
-from db.models import BaseModel, Cluster
+from db.peewee.models import BaseModel, Cluster
 
 
 class ClusterCitation(BaseModel):

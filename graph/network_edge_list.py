@@ -2,7 +2,7 @@ from typing import NamedTuple, Dict, Iterable
 import numpy as np
 from itertools import chain
 import peewee
-from db.models import *
+from db.peewee.models import *
 from peewee import prefetch
 
 

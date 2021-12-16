@@ -1,4 +1,4 @@
-from db.models import db, Similarity
+from db.peewee.models import db, Similarity
 from graph.citation_network import CitationNetwork
 
 if __name__ == "__main__":

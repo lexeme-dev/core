@@ -1,6 +1,6 @@
 from typing import Tuple
 from peewee import ForeignKeyField, IntegerField, ModelSelect, ModelAlias
-from db.models import BaseModel, Opinion, Cluster, Court
+from db.peewee.models import BaseModel, Opinion, Cluster, Court
 
 
 class Citation(BaseModel):

@@ -1,5 +1,5 @@
 from peewee import ForeignKeyField, FloatField
-from db.models import Opinion, BaseModel
+from db.peewee.models import Opinion, BaseModel
 
 
 class Similarity(BaseModel):
