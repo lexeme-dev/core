@@ -2,7 +2,7 @@ from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
 from graph import CitationNetwork
-from db.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
+from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json, model_list_to_dicts
 from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity

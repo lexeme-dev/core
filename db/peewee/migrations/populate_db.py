@@ -3,7 +3,7 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db.models import db, Cluster, Opinion, Citation
+from db.peewee.models import db, Cluster, Opinion, Citation
 from helpers import get_full_path, format_reporter
 
 

@@ -1,5 +1,5 @@
 import networkx as nx
-from db.models import db, Opinion
+from db.peewee.models import db, Opinion
 from graph.citation_network import CitationNetwork
 
 citation_graph = CitationNetwork.construct_network()

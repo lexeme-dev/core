@@ -1,7 +1,7 @@
 from graph.citation_network import CitationNetwork
 import networkx as nx
 import matplotlib.pyplot as plt
-from db.models import Opinion
+from db.peewee.models import Opinion
 
 resource_id = 100014
 plt.figure(figsize=(20, 20), frameon=False)

@@ -1,7 +1,7 @@
 import pickle
 import os
 import networkx as nx
-from db.models import Citation, Court
+from db.peewee.models import Citation, Court
 from graph.network_edge_list import NetworkEdgeList
 from helpers import get_full_path
 

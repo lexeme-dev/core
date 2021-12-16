@@ -1,6 +1,5 @@
 import heapq
 import os.path
-import pickle
 from math import inf
 from collections import OrderedDict
 from typing import Dict
@@ -43,7 +42,7 @@ def model_list_to_json(peewee_models: List[Model], **kwargs):
 
 
 def model_list_to_dicts(peewee_models: List[Model], **kwargs):
-    from db.models import DEFAULT_SERIALIZATION_ARGS
+    from db.peewee.models import DEFAULT_SERIALIZATION_ARGS
 
     return list(map(lambda model: model_to_dict(model, **DEFAULT_SERIALIZATION_ARGS, **kwargs), peewee_models))
 

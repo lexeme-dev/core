@@ -1,7 +1,6 @@
-from enum import Enum
 from peewee import IntegerField, TextField, fn
 from playhouse.postgres_ext import TSVectorField
-from db.models import BaseModel
+from db.peewee.models import BaseModel
 
 
 class Court:
