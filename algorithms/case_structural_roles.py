@@ -1,3 +1,5 @@
+# TODO: Broken legacy code with libraries we don't want installed anymore because they cause version conflicts. Remove.
+
 from graph.citation_network import CitationNetwork
 import networkx as nx
 import pickle
