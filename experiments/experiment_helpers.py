@@ -1,5 +1,5 @@
 from typing import Iterable, List
-from db.peewee.models import Opinion
+from deebee.peewee.models import Opinion
 
 
 def opinion_ids_to_names(opinion_ids: Iterable[str]) -> List[str]:

@@ -2,7 +2,7 @@ from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
 from graph import CitationNetwork
-from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
+from deebee.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from playhouse.shortcuts import model_to_dict
 from helpers import model_list_to_json, model_list_to_dicts
 from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity
@@ -52,7 +52,7 @@ def get_similar_cases():
     max_cases = request.args.get('max_cases') or 25
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    similar_case_query = similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
+    similar_case_query = similarity.deebee_case_similarity(frozenset(case_resource_ids), max_cases)
     similar_cases = [similarity_record.opinion_b for similarity_record in similar_case_query]
     return model_list_to_json(similar_cases)
 

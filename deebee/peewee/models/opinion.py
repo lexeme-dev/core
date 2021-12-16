@@ -1,6 +1,6 @@
 from typing import List, Optional
 from peewee import IntegerField, TextField, ForeignKeyField
-from db.peewee.models import BaseModel, Cluster
+from deebee.peewee.models import BaseModel, Cluster
 
 
 class Opinion(BaseModel):

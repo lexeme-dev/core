@@ -7,6 +7,6 @@ if __name__ == '__main__':
     op_ids = frozenset([103442, 112768, 809122])
     print(experiment_helpers.opinion_ids_to_names(op_ids))
     recs = citation_network.recommendation.recommendations(op_ids, 10)
-    sims = citation_network.similarity.db_case_similarity(frozenset(op_ids), max_cases=10)
+    sims = citation_network.similarity.deebee_case_similarity(frozenset(op_ids), max_cases=10)
     print(experiment_helpers.opinion_ids_to_names(recs.keys()))
     print([sim.opinion_b.cluster.case_name for sim in sims])

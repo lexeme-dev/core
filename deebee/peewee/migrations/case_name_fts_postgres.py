@@ -1,5 +1,5 @@
 # We can no longer use SQLite's FTS5 as we move to PostgreSQL, so we're creating a new index and column here.
-from db.peewee.models import db
+from deebee.peewee.models import deebee
 
 
 def create_case_name_index():
@@ -11,7 +11,7 @@ def create_case_name_index():
         CREATE INDEX searchable_case_name_idx ON cluster USING GIN (searchable_case_name);
     """
     print(update_clusters_query)
-    db.execute_sql(update_clusters_query)
+    deebee.execute_sql(update_clusters_query)
     pass
 
 
@@ -30,10 +30,10 @@ def create_case_index_trigger():
     FOR EACH ROW EXECUTE PROCEDURE update_searchable_case_name_trigger();
     """
     print(trigger_query)
-    db.execute_sql(trigger_query)
+    deebee.execute_sql(trigger_query)
 
 
 if __name__ == '__main__':
-    # db.execute_sql("DROP TRIGGER update_searchable_case_name ON cluster; DROP FUNCTION update_searchable_case_name_trigger;")
+    # deebee.execute_sql("DROP TRIGGER update_searchable_case_name ON cluster; DROP FUNCTION update_searchable_case_name_trigger;")
     create_case_name_index()
     create_case_index_trigger()

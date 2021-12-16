@@ -19,4 +19,4 @@ Supreme Court precedent with a graph theoretic approach.
 
 ## Migrations
 
-Look at ./db/migrations and just `python <migration>.py`
+Look at ./deebee/migrations and just `python <migration>.py`

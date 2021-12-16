@@ -1,7 +1,7 @@
 import csv
 
 from peewee import chunked
-from db.peewee.models import *
+from deebee.peewee.models import *
 from helpers import get_full_path
 
 
@@ -36,7 +36,7 @@ def add_all_citations_for_current_cases(citation_iterable, opinion_ids):
 
 opinion_resource_ids = {op.resource_id for op in Opinion.select(Opinion.resource_id)}
 print('Fetched opinion IDs...')
-with db.atomic():
+with deebee.atomic():
     drop_existing_citations()
     print('Dropped existing citations...')
     citation_iterable = get_citation_iterable()

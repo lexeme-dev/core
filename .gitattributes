@@ -1,2 +1,2 @@
-*.db filter=lfs diff=lfs merge=lfs -text
+*.deebee filter=lfs diff=lfs merge=lfs -text
 *.pik filter=lfs diff=lfs merge=lfs -text

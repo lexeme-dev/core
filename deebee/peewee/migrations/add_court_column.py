@@ -1,12 +1,12 @@
 from playhouse.migrate import *
-from db.peewee.models import *
+from deebee.peewee.models import *
 
 HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia', 'html_anon_2020', 'plain_text']
 
 
 def add_court_col():
     court = TextField(null=True)
-    migrator = PostgresqlMigrator(db)
+    migrator = PostgresqlMigrator(deebee)
     migrate(
         migrator.add_column('cluster', 'court', court)
     )

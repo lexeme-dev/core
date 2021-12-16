@@ -3,12 +3,12 @@ import json
 import csv
 import dateutil.parser
 from datetime import timezone
-from db.peewee.models import db, Cluster, Opinion, Citation
+from deebee.peewee.models import deebee, Cluster, Opinion, Citation
 from helpers import get_full_path, format_reporter
 
 
-def create_db_tables():
-    db.create_tables([Cluster, Opinion, Citation])
+def create_deebee_tables():
+    deebee.create_tables([Cluster, Opinion, Citation])
 
 
 # TODO: Make this method select the reporter smarter (e.g. in order of U.S., S. Ct., etc.)
@@ -49,7 +49,7 @@ def ingest_cluster_data(clusters_dir):
                     cluster_records.append(new_record)
         except:
             print(f'Failure on file {file}')
-    with db.atomic():
+    with deebee.atomic():
         Cluster.bulk_create(cluster_records, batch_size=100)
 
 
@@ -72,7 +72,7 @@ def ingest_opinion_data(opinions_dir):
                     opinion_records.append(new_record)
         except:
             print(f'Failure on file {file}')
-    with db.atomic():
+    with deebee.atomic():
         Opinion.bulk_create(opinion_records, batch_size=100)
 
 
@@ -92,14 +92,14 @@ def ingest_citation_data(citations_file):
                     citation_records.append(new_record)
             except Exception as e:
                 print(f'Failure on row {row}: {e}')
-        with db.atomic():
+        with deebee.atomic():
             Citation.bulk_create(citation_records, batch_size=100)
 
 
 if __name__ == '__main__':
-    db.connect()
-    create_db_tables()
+    deebee.connect()
+    create_deebee_tables()
     ingest_cluster_data(get_full_path(r"data/scotus_clusters/"))
     ingest_opinion_data(get_full_path(r"data/scotus_opinions/"))
     ingest_citation_data(get_full_path(r"data/citations.csv"))
-    db.close()
+    deebee.close()

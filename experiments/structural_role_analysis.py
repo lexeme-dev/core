@@ -2,7 +2,7 @@ import csv
 from dataclasses import dataclass
 from typing import Dict, List
 from helpers import get_full_path
-from db.peewee.models import Citation
+from deebee.peewee.models import Citation
 
 STRUCTURAL_ROLE_FILE_PATH = 'data/structural_roles.csv'
 

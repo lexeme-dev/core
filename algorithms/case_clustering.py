@@ -16,7 +16,7 @@ class CaseClustering:
         self.citation_network = citation_network
         self.similarity = CaseSimilarity(citation_network)
 
-    def dbscan_cluster(self, opinion_ids: set, eps=0.94) -> Dict[int, set]:
+    def deebeescan_cluster(self, opinion_ids: set, eps=0.94) -> Dict[int, set]:
         sgraph = self.similarity.internal_similarity(opinion_ids)
         slaplacian = nx.laplacian_matrix(sgraph).toarray()
         slaplacian += 1

@@ -1,6 +1,6 @@
 from peewee import IntegerField, TextField, fn
 from playhouse.postgres_ext import TSVectorField
-from db.peewee.models import BaseModel
+from deebee.peewee.models import BaseModel
 
 
 class Court:

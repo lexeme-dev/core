@@ -1,5 +1,5 @@
 from typing import Iterable, List, cast
-from db.peewee.models import Opinion, Cluster
+from deebee.peewee.models import Opinion, Cluster
 from helpers import format_reporter
 import eyecite
 from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
@@ -37,7 +37,7 @@ class CitationExtractor:
 
         TODO: Make requisite improvements to our data and this method to fix.
 
-        :return: An iterable of db_models.Opinion objects corresponding to cases cited by the given unstructured text.
+        :return: An iterable of deebee_models.Opinion objects corresponding to cases cited by the given unstructured text.
         """
         if cited_resources is None:
             cited_resources = eyecite.resolve_citations(self.get_citations())

@@ -1,4 +1,4 @@
-from db.peewee.models import *
+from deebee.peewee.models import *
 from helpers import get_full_path
 import csv
 

@@ -1,7 +1,7 @@
 import os
 import json
 from playhouse.migrate import *
-from db.peewee.models import *
+from deebee.peewee.models import *
 from helpers import get_full_path
 
 HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia', 'html_anon_2020', 'plain_text']
@@ -9,7 +9,7 @@ HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia
 
 def add_opinion_text_col():
     html_text_field = TextField(null=True)
-    migrator = PostgresqlMigrator(db)
+    migrator = PostgresqlMigrator(deebee)
     migrate(
         migrator.add_column('opinion', 'html_text', html_text_field)
     )

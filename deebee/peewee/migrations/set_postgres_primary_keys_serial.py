@@ -1,6 +1,6 @@
 # For some god-forsaken reason, when I migrated the database it didn't set the id columns as serial, so
 # now we're just gonna do it manually :/
-from db.peewee.models import db
+from deebee.peewee.models import deebee
 
 
 def set_primary_keys_to_serial():
@@ -11,7 +11,7 @@ def set_primary_keys_to_serial():
         ALTER TABLE {table_name} ALTER id SET DEFAULT nextval('{table_name}_seq');
         SELECT setval('{table_name}_seq', (SELECT max(id) from {table_name}) + 1);
         """
-        db.execute_sql(serial_query)
+        deebee.execute_sql(serial_query)
 
 
 if __name__ == '__main__':
