@@ -28,7 +28,7 @@ class Cluster(Base):
     __tablename__ = 'cluster'
 
     id = Column(BigInteger, Sequence('cluster_seq'), primary_key=True)
-    resource_id = Column(BigInteger)
+    resource_id = Column(BigInteger, index=True, unique=True)
     case_name = Column(Text)
     reporter = Column(Text)
     citation_count = Column(BigInteger)
@@ -62,7 +62,7 @@ class Opinion(Base):
     __tablename__ = 'opinion'
 
     id = Column(BigInteger, Sequence('opinion_seq'), primary_key=True)
-    resource_id = Column(BigInteger)
+    resource_id = Column(BigInteger, index=True, unique=True)
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
     cluster_id = Column(BigInteger)
