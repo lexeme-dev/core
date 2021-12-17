@@ -15,7 +15,8 @@ Supreme Court precedent with a graph theoretic approach.
 
 1. Set PROJECT_PATH to the github directory, using .env or standard bashrc
 2. Set a psql server hostname, port, and username + password if necessary in .env
-3. `flask run`
+3. If the dB migrations aren't set up, `alembic stamp head`. Make sure you have a username in .env.
+4. `flask run`
 
 ## Migrations
 
