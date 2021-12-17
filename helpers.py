@@ -37,6 +37,14 @@ def connect_to_database():
     return PostgresqlDatabase(db_name, user=db_username, password=db_password, host=db_host, port=db_port)
 
 
+def get_db_url():
+    load_dotenv()
+    db_host, db_name, db_username, db_password, db_port = (os.getenv('DB_HOST'), os.getenv('DB_NAME'),
+                                                           os.getenv('DB_USERNAME'), os.getenv('DB_PASSWORD'),
+                                                           os.getenv('DB_PORT'))
+    return f"postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+
 def model_list_to_json(peewee_models: List[Model], **kwargs):
     return jsonify(model_list_to_dicts(peewee_models, **kwargs))
 
