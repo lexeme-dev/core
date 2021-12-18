@@ -1,11 +1,30 @@
 # coding: utf-8
+from typing import Tuple
 from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Query, aliased, relationship, deferred
+from sqlalchemy.sql import Alias
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class Court:
+    SCOTUS = 'scotus'
+    CA1 = 'ca1'
+    CA2 = 'ca2'
+    CA3 = 'ca3'
+    CA4 = 'ca4'
+    CA5 = 'ca5'
+    CA6 = 'ca6'
+    CA7 = 'ca7'
+    CA8 = 'ca8'
+    CA9 = 'ca9'
+    CA10 = 'ca10'
+    CA11 = 'ca11'
+    CADC = 'cadc'
+    CAFC = 'cafc'
 
 
 class Citation(Base):
@@ -15,6 +34,31 @@ class Citation(Base):
     citing_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     cited_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     depth = Column(BigInteger)
+
+    # noinspection PyPep8Naming
+    @staticmethod
+    def join_to_clusters(base_citation_query: Query) -> Tuple[Query, Alias, Alias]:
+        citing_opinion, cited_opinion = aliased(Opinion), aliased(Opinion)
+        citing_cluster, cited_cluster = aliased(Cluster), aliased(Cluster)
+        return (base_citation_query
+                .join(citing_opinion, Citation.citing_opinion_id == citing_opinion.resource_id)
+                .join(cited_opinion, Citation.cited_opinion_id == cited_opinion.resource_id)
+                .join(citing_cluster, citing_opinion.cluster_id == citing_cluster.resource_id)
+                .join(cited_cluster, cited_opinion.cluster_id == cited_cluster.resource_id)
+                ), citing_cluster, cited_cluster
+
+    @staticmethod
+    def where_court(base_citation_query: Query, citing_court: Court = None,
+                    cited_court: Court = None) -> Query:
+        citation_query, citing_cluster_alias, cited_cluster_alias = Citation.join_to_clusters(base_citation_query)
+        if citing_court and cited_court:
+            citation_query = (citation_query.filter((citing_cluster_alias.court == citing_court) &
+                                                    (cited_cluster_alias.court == cited_court)))
+        elif citing_court:
+            citation_query = citation_query.filter(citing_cluster_alias.court == citing_court)
+        elif cited_court:
+            citation_query = citation_query.filter(cited_cluster_alias.court == cited_court)
+        return citation_query
 
 
 class Cluster(Base):
