@@ -2,6 +2,7 @@
 from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Query, aliased, relationship, deferred
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -52,8 +53,17 @@ class Opinion(Base):
     resource_id = Column(BigInteger, index=True, unique=True)
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
-    cluster_id = Column(BigInteger, index=True)
-    html_text = Column(Text)
+    cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'))
+    cluster = relationship("Cluster", lazy='joined')
+    html_text = deferred(Column(Text))
+
+    out_citations = relationship("Citation", primaryjoin="Opinion.resource_id == Citation.citing_opinion_id",
+                                 backref="citing_opinion")
+    in_citations = relationship("Citation", primaryjoin="Opinion.resource_id == Citation.cited_opinion_id",
+                                backref="cited_opinion")
+    citations = relationship("Citation",
+                             primaryjoin="or_(Opinion.resource_id == Citation.cited_opinion_id, Opinion.resource_id == Citation.citing_opinion_id)",
+                             overlaps="citing_opinion,cited_opinion,in_citations,out_citations")
 
 
 class OpinionParenthetical(Base):
