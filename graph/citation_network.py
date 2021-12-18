@@ -1,7 +1,10 @@
 import pickle
 import os
 import networkx as nx
-from db.peewee.models import Citation, Court
+from sqlalchemy import select
+
+from db.sqlalchemy import get_session
+from db.sqlalchemy.models import Citation, Court
 from graph.network_edge_list import NetworkEdgeList
 from helpers import get_full_path
 
@@ -46,9 +49,10 @@ class CitationNetwork:
             citation_network = nx.DiGraph()
         else:
             citation_network = nx.Graph()
-        citation_query = Citation.select()
+        citation_query = select(Citation)
         if scotus_only:
             citation_query = Citation.where_court(citation_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
-        citations = [(c.citing_opinion, c.cited_opinion, c.depth) for c in citation_query]
+        with get_session() as s:
+            citations = [(c.citing_opinion_id, c.cited_opinion_id, c.depth) for c in s.execute(citation_query).scalars().all()]
         citation_network.add_weighted_edges_from(citations)
         return citation_network
