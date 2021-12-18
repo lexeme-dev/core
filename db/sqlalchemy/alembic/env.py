@@ -4,9 +4,11 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from alembic_utils.replaceable_entity import register_entities
 
 from helpers import get_db_url
 from db.sqlalchemy.models import Base as ModelBase
+from db.sqlalchemy.pg_entities import PG_ENTITY_LIST
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,6 +28,9 @@ target_metadata = ModelBase.metadata
 # ... etc.
 
 config.set_main_option("sqlalchemy.url", get_db_url())
+
+# Register postgres functions to be tracked by alembic for revisions
+register_entities(PG_ENTITY_LIST)
 
 
 def run_migrations_offline():
