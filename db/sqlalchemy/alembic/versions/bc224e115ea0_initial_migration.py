@@ -7,6 +7,9 @@ Create Date: 2021-12-16 15:56:44.059300
 """
 from alembic import op
 import sqlalchemy as sa
+from alembic_utils.pg_extension import PGExtension
+from alembic_utils.pg_function import PGFunction
+from alembic_utils.pg_trigger import PGTrigger
 from sqlalchemy.sql import text
 from sqlalchemy.dialects import postgresql
 
@@ -89,19 +92,28 @@ def upgrade():
             to_tsvector('pg_catalog.english', case_name || ' ' || coalesce(reporter, '') || ' ' || year);
         CREATE INDEX searchable_case_name_idx ON cluster USING GIN (searchable_case_name);
         """))
-    conn.execute(text("""
-    CREATE FUNCTION update_searchable_case_name_trigger() RETURNS trigger as $$
-    begin
-        new.searchable_case_name := 
-            to_tsvector('pg_catalog.english', new.case_name || ' ' || coalesce(new.reporter, '') || ' ' || new.year);
-        return new;
-    end
-    $$ LANGUAGE  plpgsql;
 
-    CREATE TRIGGER update_searchable_case_name
-    BEFORE INSERT OR UPDATE ON cluster
-    FOR EACH ROW EXECUTE PROCEDURE update_searchable_case_name_trigger();
-    """))
+    public_pg_trgm = PGExtension(
+        schema="public",
+        signature="pg_trgm"
+    )
+    op.create_entity(public_pg_trgm)
+
+    public_update_searchable_case_name_trigger = PGFunction(
+        schema="public",
+        signature="update_searchable_case_name_trigger()",
+        definition="RETURNS trigger\n      LANGUAGE plpgsql\n      AS $$\n      begin\n          new.searchable_case_name := \n              to_tsvector('pg_catalog.english', new.case_name || ' ' || coalesce(new.reporter, '') || ' ' || new.year);\n          return new;\n      end\n      $$"
+    )
+    op.create_entity(public_update_searchable_case_name_trigger)
+
+    public_cluster_update_searchable_case_name = PGTrigger(
+        schema="public",
+        signature="update_searchable_case_name",
+        on_entity="public.cluster",
+        is_constraint=False,
+        definition='BEFORE INSERT OR UPDATE ON public.cluster\n      FOR EACH ROW EXECUTE PROCEDURE public.update_searchable_case_name_trigger()'
+    )
+    op.create_entity(public_cluster_update_searchable_case_name)
 
 
 def downgrade():
@@ -123,3 +135,23 @@ def downgrade():
     op.drop_index('idx_40711_citation_cited_opinion_id', table_name='citation')
     op.drop_table('citation')
     # ### end Alembic commands ###
+    public_pg_trgm = PGExtension(
+        schema="public",
+        signature="pg_trgm"
+    )
+    op.drop_entity(public_pg_trgm)
+    public_cluster_update_searchable_case_name = PGTrigger(
+        schema="public",
+        signature="update_searchable_case_name",
+        on_entity="public.cluster",
+        is_constraint=False,
+        definition='BEFORE INSERT OR UPDATE ON public.cluster\n      FOR EACH ROW EXECUTE PROCEDURE public.update_searchable_case_name_trigger()'
+    )
+    op.drop_entity(public_cluster_update_searchable_case_name)
+
+    public_update_searchable_case_name_trigger = PGFunction(
+        schema="public",
+        signature="update_searchable_case_name_trigger()",
+        definition="RETURNS trigger\n      LANGUAGE plpgsql\n      AS $$\n      begin\n          new.searchable_case_name := \n              to_tsvector('pg_catalog.english', new.case_name || ' ' || coalesce(new.reporter, '') || ' ' || new.year);\n          return new;\n      end\n      $$"
+    )
+    op.drop_entity(public_update_searchable_case_name_trigger)
