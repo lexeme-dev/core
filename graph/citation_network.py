@@ -21,8 +21,10 @@ class CitationNetwork:
     def get_citation_network(enable_caching=True):
         cache_file_path = get_full_path(NETWORK_CACHE_PATH)
         if not enable_caching:
+            print("Loading citation network from database...")
             return CitationNetwork()
         if os.path.exists(cache_file_path):
+            print("Loading citation network from disk cache...")
             try:
                 with open(cache_file_path, 'rb') as cache_file:
                     return pickle.load(cache_file)
