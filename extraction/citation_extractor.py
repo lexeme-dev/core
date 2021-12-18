@@ -9,7 +9,9 @@ class CitationExtractor:
     unstructured_text: str
 
     def __init__(self, unstructured_text: str):
-        self.unstructured_text = unstructured_text
+        # Allows eyecite to detect reporter citations when a whitespace exists between the letters of the abbreviation
+        cleaned_text = unstructured_text.replace("U. S. ", "U.S. ")
+        self.unstructured_text = cleaned_text
 
     def get_citations(self) -> List[CitationBase]:
         return list(eyecite.get_citations(self.unstructured_text))
