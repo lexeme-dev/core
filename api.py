@@ -14,6 +14,7 @@ import oyez_brief
 app = Flask(__name__)
 CORS(app)
 citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+print("Loaded citation network.")
 similarity = CaseSimilarity(citation_network)
 clustering = CaseClustering(citation_network)
 recommendation = CaseRecommendation(citation_network)

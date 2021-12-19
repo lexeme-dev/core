@@ -1,9 +1,10 @@
 from typing import NamedTuple, Dict, Iterable
 import numpy as np
-from itertools import chain
-import peewee
-from db.peewee.models import *
-from peewee import prefetch
+from sqlalchemy import select, func
+from sqlalchemy.orm import contains_eager
+
+from db.sqlalchemy import get_session
+from db.sqlalchemy.models import *
 
 
 class NodeMetadata(NamedTuple):
@@ -25,26 +26,24 @@ class NetworkEdgeList:
         self.__populate_edge_list(opinion_query)
 
     def __init_queries(self, scotus_only):
-        edge_list_size = Citation.select().count() * 2
-        self.edge_list = np.empty(edge_list_size, dtype='int32')
-        self.node_metadata = {}
-        opinion_query = (Opinion.select(Opinion.resource_id, Cluster.year)
-                         .join(Cluster, join_type=peewee.JOIN.LEFT_OUTER))
-        if scotus_only:
-            opinion_query = opinion_query.where(Cluster.court == Court.SCOTUS)
-        citation_query = Citation.select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)
-        if scotus_only:
-            citation_query = Citation.where_court(citation_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
-        citation_query = citation_query.order_by(Citation.citing_opinion_id, Citation.cited_opinion_id)
-        prefetch(opinion_query, citation_query)
-        return opinion_query
+        with get_session() as s:
+            edge_list_size = s.execute(select(func.count(Citation.id))).scalar() * 2
+            self.edge_list = np.empty(edge_list_size, dtype='int32')
+            self.node_metadata = {}
+            opinion_query = (select(Opinion)
+                             .join(Opinion.citations)
+                             .options(contains_eager(Opinion.citations)))
+            if scotus_only:
+                opinion_query = Citation.where_court(opinion_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
+            opinion_query = opinion_query.order_by(Citation.citing_opinion_id, Citation.cited_opinion_id)
+            return s.execute(opinion_query).unique().scalars().all()
 
     def __populate_edge_list(self, opinion_iter: Iterable[Opinion]):
         prev_index = 0
         for opinion in opinion_iter:
-            num_neighbors = len(opinion.out_citations) + len(opinion.in_citations)
+            num_neighbors = len(opinion.citations)
             node_neighbors = np.empty(num_neighbors, dtype='int32')
-            for i, citation in enumerate(chain(opinion.out_citations, opinion.in_citations)):
+            for i, citation in enumerate(opinion.citations):
                 if citation.cited_opinion_id == opinion.resource_id:
                     neighbor = citation.citing_opinion_id
                 else:

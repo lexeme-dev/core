@@ -1,34 +1,71 @@
 # coding: utf-8
-from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, text
+from typing import Tuple
+from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Query, aliased, relationship, deferred
+from sqlalchemy.sql import Alias
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class Court:
+    SCOTUS = 'scotus'
+    CA1 = 'ca1'
+    CA2 = 'ca2'
+    CA3 = 'ca3'
+    CA4 = 'ca4'
+    CA5 = 'ca5'
+    CA6 = 'ca6'
+    CA7 = 'ca7'
+    CA8 = 'ca8'
+    CA9 = 'ca9'
+    CA10 = 'ca10'
+    CA11 = 'ca11'
+    CADC = 'cadc'
+    CAFC = 'cafc'
 
 
 class Citation(Base):
     __tablename__ = 'citation'
 
     id = Column(BigInteger, Sequence('citation_seq'), primary_key=True)
-    citing_opinion_id = Column(BigInteger)
-    cited_opinion_id = Column(BigInteger)
+    citing_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
+    cited_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     depth = Column(BigInteger)
 
-    # We have to do these rather than index=True on the column because our previous ORM named indexes by its own convention
-    # and for backwards compatibility reasons we're not going to recreate them with SQLAlchemy's default names.
-    # When adding new columns in the future, this is unnecessary, just use index=True
-    __table_args__ = (
-        Index('idx_40711_citation_citing_opinion_id', 'citing_opinion_id', unique=False),
-        Index('idx_40711_citation_cited_opinion_id', 'cited_opinion_id', unique=False),
-    )
+    # noinspection PyPep8Naming
+    @staticmethod
+    def join_to_clusters(base_citation_query: Query) -> Tuple[Query, Alias, Alias]:
+        citing_opinion, cited_opinion = aliased(Opinion), aliased(Opinion)
+        citing_cluster, cited_cluster = aliased(Cluster), aliased(Cluster)
+        return (base_citation_query
+                .join(citing_opinion, Citation.citing_opinion_id == citing_opinion.resource_id)
+                .join(cited_opinion, Citation.cited_opinion_id == cited_opinion.resource_id)
+                .join(citing_cluster, citing_opinion.cluster_id == citing_cluster.resource_id)
+                .join(cited_cluster, cited_opinion.cluster_id == cited_cluster.resource_id)
+                ), citing_cluster, cited_cluster
+
+    @staticmethod
+    def where_court(base_citation_query: Query, citing_court: Court = None,
+                    cited_court: Court = None) -> Query:
+        citation_query, citing_cluster_alias, cited_cluster_alias = Citation.join_to_clusters(base_citation_query)
+        if citing_court and cited_court:
+            citation_query = (citation_query.filter((citing_cluster_alias.court == citing_court) &
+                                                    (cited_cluster_alias.court == cited_court)))
+        elif citing_court:
+            citation_query = citation_query.filter(citing_cluster_alias.court == citing_court)
+        elif cited_court:
+            citation_query = citation_query.filter(cited_cluster_alias.court == cited_court)
+        return citation_query
 
 
 class Cluster(Base):
     __tablename__ = 'cluster'
 
     id = Column(BigInteger, Sequence('cluster_seq'), primary_key=True)
-    resource_id = Column(BigInteger)
+    resource_id = Column(BigInteger, index=True, unique=True)
     case_name = Column(Text)
     reporter = Column(Text)
     citation_count = Column(BigInteger)
@@ -48,29 +85,29 @@ class ClusterCitation(Base):
     __tablename__ = 'clustercitation'
 
     id = Column(BigInteger, Sequence('clustercitation_seq'), primary_key=True)
-    citing_cluster_id = Column(BigInteger)
-    cited_cluster_id = Column(BigInteger)
+    citing_cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'), index=True)
+    cited_cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'), index=True)
     depth = Column(BigInteger)
-
-    __table_args__ = (
-        Index('idx_40753_clustercitation_citing_cluster_id', 'citing_cluster_id', unique=False),
-        Index('idx_40753_clustercitation_cited_cluster_id', 'cited_cluster_id', unique=False),
-    )
 
 
 class Opinion(Base):
     __tablename__ = 'opinion'
 
     id = Column(BigInteger, Sequence('opinion_seq'), primary_key=True)
-    resource_id = Column(BigInteger)
+    resource_id = Column(BigInteger, index=True, unique=True)
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
-    cluster_id = Column(BigInteger)
-    html_text = Column(Text)
+    cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'))
+    cluster = relationship("Cluster", lazy='joined')
+    html_text = deferred(Column(Text))
 
-    __table_args__ = (
-        Index('idx_40705_opinion_cluster_id', 'cluster_id', unique=False),
-    )
+    out_citations = relationship("Citation", primaryjoin="Opinion.resource_id == Citation.citing_opinion_id",
+                                 backref="citing_opinion")
+    in_citations = relationship("Citation", primaryjoin="Opinion.resource_id == Citation.cited_opinion_id",
+                                backref="cited_opinion")
+    citations = relationship("Citation",
+                             primaryjoin="or_(Opinion.resource_id == Citation.cited_opinion_id, Opinion.resource_id == Citation.citing_opinion_id)",
+                             overlaps="citing_opinion,cited_opinion,in_citations,out_citations")
 
 
 class OpinionParenthetical(Base):
@@ -78,26 +115,15 @@ class OpinionParenthetical(Base):
 
     # This column has a different integer type and sequence naming convention, would be good to fix in the future
     id = Column(Integer, Sequence('opinionparenthetical_id_seq'), primary_key=True)
-    citing_opinion_id = Column(Integer, nullable=False)
-    cited_opinion_id = Column(Integer, nullable=False)
+    citing_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
+    cited_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
     text = Column(Text, nullable=False)
-
-    # The convention for index naming changes again. Why?
-    __table_args__ = (
-        Index('opinionparenthetical_citing_opinion_id', 'citing_opinion_id', unique=False),
-        Index('opinionparenthetical_cited_opinion_id', 'cited_opinion_id', unique=False),
-    )
 
 
 class Similarity(Base):
     __tablename__ = 'similarity'
 
     id = Column(BigInteger, Sequence('similarity_seq'), primary_key=True)
-    opinion_a_id = Column(BigInteger)
-    opinion_b_id = Column(BigInteger)
+    opinion_a_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
+    opinion_b_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     similarity_index = Column(Float)
-
-    __table_args__ = (
-        Index('idx_40750_similarity_opinion_a_id', 'opinion_a_id', unique=False),
-        Index('idx_40750_similarity_opinion_b_id', 'opinion_b_id', unique=False),
-    )
