@@ -13,4 +13,5 @@ scikit_learn==1.0.1
 scipy==1.6.3
 sqlalchemy==1.4.28
 alembic==1.7.5
+alembic_utils==0.7.4
 sqlacodegen==2.3.0
