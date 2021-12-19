@@ -15,3 +15,5 @@ sqlalchemy==1.4.28
 alembic==1.7.5
 alembic_utils==0.7.4
 sqlacodegen==2.3.0
+nodevectors==0.1.23
+gensim==3.6.0
