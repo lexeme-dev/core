@@ -2,6 +2,7 @@ import gzip
 import io
 import os
 import tarfile
+import threading
 import urllib.request
 
 from helpers import get_full_path
@@ -15,7 +16,7 @@ CLUSTER_ROOT = "clusters"
 CITATIONS_REMOTE_PATH = "citations/all.csv.gz"
 CITATIONS_LOCAL_PATH = "citations.csv"
 
-FILE_ROOT_DIR = "data/cl"
+FILE_ROOT_DIR = os.path.join("data", "cl")
 
 
 def get_download_url(resource_type: str, jurisdiction: str):
@@ -23,7 +24,7 @@ def get_download_url(resource_type: str, jurisdiction: str):
 
 
 def get_folder_path(resource_type: str, jurisdiction: str):
-    return get_full_path(os.path.join(resource_type, jurisdiction))
+    return get_full_path(os.path.join(FILE_ROOT_DIR, resource_type, jurisdiction))
 
 
 def get_data_folder(resource_type: str, jurisdiction: str):
@@ -48,5 +49,12 @@ def get_citation_csv():
 
 
 if __name__ == '__main__':
-    for jurisdiction in JURISDICTIONS:
-        pass
+    threads = []
+    for jur in JURISDICTIONS:
+        threads.append(threading.Thread(target=get_data_folder, args=(CLUSTER_ROOT, jur)))
+        threads.append(threading.Thread(target=get_data_folder, args=(CLUSTER_ROOT, jur)))
+    threads.append(threading.Thread(target=get_citation_csv))
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
