@@ -77,7 +77,7 @@ class Cluster(Base):
     court = Column(Text)
 
     __table_args__ = (
-        Index('searchable_case_name_idx', 'searchable_case_name', unique=False),
+        Index('searchable_case_name_idx', 'searchable_case_name', postgresql_using='gin', unique=False),
     )
 
 

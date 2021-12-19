@@ -86,12 +86,7 @@ def upgrade():
     op.create_index('idx_40750_similarity_opinion_b_id', 'similarity', ['opinion_b_id'], unique=False)
     # ### end Alembic commands ###
 
-    conn = op.get_bind()
-    conn.execute(text("""
-        UPDATE cluster SET searchable_case_name = 
-            to_tsvector('pg_catalog.english', case_name || ' ' || coalesce(reporter, '') || ' ' || year);
-        CREATE INDEX searchable_case_name_idx ON cluster USING GIN (searchable_case_name);
-        """))
+    op.create_index('searchable_case_name_idx', 'cluster', ['searchable_case_name'], unique=False, postgresql_using='gin')
 
     public_pg_trgm = PGExtension(
         schema="public",
