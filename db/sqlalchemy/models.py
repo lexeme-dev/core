@@ -1,6 +1,6 @@
 # coding: utf-8
 from typing import Tuple
-from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey
+from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey, String
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Query, aliased, relationship, deferred
@@ -75,6 +75,7 @@ class Cluster(Base):
     time = Column(BigInteger)
     searchable_case_name = Column(TSVECTOR)
     court = Column(Text)
+    courtlistener_json_checksum = Column(String(32))
 
     __table_args__ = (
         Index('searchable_case_name_idx', 'searchable_case_name', postgresql_using='gin', unique=False),
@@ -100,6 +101,7 @@ class Opinion(Base):
     cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'))
     cluster = relationship("Cluster", lazy='joined')
     html_text = deferred(Column(Text))
+    courtlistener_json_checksum = Column(String(32))
 
     out_citations = relationship("Citation", primaryjoin="Opinion.resource_id == Citation.citing_opinion_id",
                                  backref="citing_opinion")
