@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from alembic_utils.replaceable_entity import register_entities
 
-from helpers import get_db_url
+from db.sqlalchemy.helpers import get_db_url
 from db.sqlalchemy.models import Base as ModelBase
 from db.sqlalchemy.pg_entities import PG_ENTITY_LIST
 

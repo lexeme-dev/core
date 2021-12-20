@@ -1,14 +1,15 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
-from graph import CitationNetwork
-from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
+from io import BufferedReader
 from playhouse.shortcuts import model_to_dict
-from helpers import model_list_to_json, model_list_to_dicts
+
 from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity
+from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
+from db.peewee.helpers import model_list_to_json, model_list_to_dicts
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
-from io import BufferedReader
+from graph import CitationNetwork
 import oyez_brief
 
 app = Flask(__name__)
