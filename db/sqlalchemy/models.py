@@ -1,4 +1,5 @@
 # coding: utf-8
+from enum import Enum
 from typing import Tuple
 from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey, String
 from sqlalchemy.dialects.postgresql import TSVECTOR
@@ -10,7 +11,7 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class Court:
+class Court(str, Enum):
     SCOTUS = 'scotus'
     CA1 = 'ca1'
     CA2 = 'ca2'
