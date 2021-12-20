@@ -1,7 +1,7 @@
 # coding: utf-8
 from enum import Enum
 from typing import Tuple
-from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey, String
+from sqlalchemy import BigInteger, Column, Float, Integer, Text, Sequence, Index, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Query, aliased, relationship, deferred
@@ -35,6 +35,11 @@ class Citation(Base):
     citing_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     cited_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     depth = Column(BigInteger)
+
+    __table_args__ = (
+        # TODO: Make this a primary key constraint and remove the superfluous 'id' column
+        UniqueConstraint('citing_opinion_id', 'cited_opinion_id'),
+    )
 
     # noinspection PyPep8Naming
     @staticmethod
