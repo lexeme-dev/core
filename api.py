@@ -5,12 +5,13 @@ from io import BufferedReader
 from playhouse.shortcuts import model_to_dict
 
 from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity
+# TODO: Refactor this into a CaseOyezBrief class to standardize with the above names
+from algorithms import case_oyez_brief
 from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from db.peewee.helpers import model_list_to_json, model_list_to_dicts
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
 from graph import CitationNetwork
-import oyez_brief
 
 app = Flask(__name__)
 CORS(app)
@@ -86,7 +87,7 @@ def search():
 
 @app.route('/cases/<int:resource_id>/oyez_brief')
 def get_oyez_brief(resource_id: int):
-    if brief := oyez_brief.from_resource_id(resource_id):
+    if brief := case_oyez_brief.from_resource_id(resource_id):
         return brief._asdict()
     abort(HTTPStatus.NOT_FOUND)
 
