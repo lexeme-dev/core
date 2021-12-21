@@ -5,12 +5,8 @@ import tarfile
 import threading
 import urllib.request
 
-from db.sqlalchemy.models import Court
 from helpers import get_full_path
-from ingress.paths import BASE_CL_DIR, CITATIONS_PATH, CLUSTER_PATH, OPINION_PATH
-
-JURISDICTIONS = [Court.SCOTUS, Court.CA1, Court.CA2, Court.CA3, Court.CA4, Court.CA5, Court.CA6,
-                 Court.CA7, Court.CA8, Court.CA9, Court.CA10, Court.CA11, Court.CADC, Court.CAFC]
+from ingress.helpers import BASE_CL_DIR, CITATIONS_PATH, CLUSTER_PATH, OPINION_PATH, JURISDICTIONS
 
 BASE_URL = "https://courtlistener.com/api/bulk-data"
 REMOTE_CITATIONS_PATH = "citations/all.csv.gz"

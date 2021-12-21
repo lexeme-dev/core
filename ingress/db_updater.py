@@ -13,7 +13,7 @@ from algorithms.helpers import format_reporter
 from db.sqlalchemy import *
 from db.sqlalchemy.models import Cluster, Opinion, Court, Citation
 from helpers import get_full_path
-from ingress.paths import BASE_CL_DIR, CLUSTER_PATH, OPINION_PATH, CITATIONS_PATH
+from ingress.helpers import BASE_CL_DIR, CLUSTER_PATH, OPINION_PATH, CITATIONS_PATH
 
 DEFAULT_BATCH_SIZE = 10000
 HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia', 'html_anon_2020', 'plain_text']
