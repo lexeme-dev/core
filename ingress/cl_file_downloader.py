@@ -55,3 +55,8 @@ class ClFileDownloader:
         with open(decompressed_file_path, 'wb') as decompressed_file:
             decompressed_file.write(file_contents)
         print("Completed extraction of citations data...")
+
+
+if __name__ == '__main__':
+    downloader = ClFileDownloader()
+    downloader.download()
