@@ -36,13 +36,10 @@ class DbUpdater:
             include_text = include_text_for_dict.get(jur_name) or False
             print(f"Adding cluster data for jurisdiction {jur_name} to database...")
             self.process_cluster_data(self.__get_resource_dir_path(CLUSTER_PATH, jur_name), jurisdiction=jur_name)
-            self.session.commit()
             print(f"Adding opinion data for jurisdiction {jur_name} to database...")
             self.process_opinion_data(self.__get_resource_dir_path(OPINION_PATH, jur_name), include_text=include_text, jurisdiction=jur_name)
-            self.session.commit()
         print(f"Adding citation data to database...")
         self.process_citation_data(get_full_path(os.path.join(BASE_CL_DIR, CITATIONS_PATH)))
-        self.session.commit()
 
     def __get_resource_dir_path(self, resource_type: str, jur_name: str):
         return get_full_path(os.path.join(BASE_CL_DIR, resource_type, jur_name))
@@ -83,6 +80,7 @@ class DbUpdater:
         print(
             f"Finished reading CL cluster data for jurisdiction {jurisdiction}, upserting {len(cluster_records)} records...")
         self.__batch_query(self.__upsert_clusters_to_db, cluster_records)
+        self.session.commit()
 
     def process_opinion_data(self, dir_path: str, include_text: bool, jurisdiction: str):
         opinion_checksum_dict = self.__get_opinion_checksum_dict()
@@ -123,6 +121,7 @@ class DbUpdater:
             f"Finished reading CL opinion data for jurisdiction {jurisdiction}, upserting {len(opinion_records)} records...")
         batch_size = 100 if include_text else DEFAULT_BATCH_SIZE
         self.__batch_query(self.__upsert_opinions_to_db, opinion_records, batch_size=batch_size)
+        self.session.commit()
 
     def process_citation_data(self, citations_file):
         opinion_checksum_dict = self.__get_opinion_checksum_dict()
@@ -145,7 +144,8 @@ class DbUpdater:
                 except Exception as e:
                     print(f'Failure on citation file row {row}: {e}')
         print(f"Finished reading CL citation data, upserting {len(citation_records)} records...")
-        self.__batch_query(self.__upsert_citations_to_db, citation_records)
+        self.__batch_query(self.__upsert_citations_to_db, citation_records, batch_size=100_000)
+        self.session.commit()
 
     def __get_html_text(self, opinion_data):
         for field in HTML_TEXT_FIELDS:
