@@ -21,11 +21,11 @@ class CitationNetwork:
         self.network_edge_list = NetworkEdgeList(scotus_only)
 
     @staticmethod
-    def get_citation_network(enable_caching=True):
+    def get_citation_network(enable_caching=True, scotus_only=False):
         cache_file_path = get_full_path(NETWORK_CACHE_PATH)
         if not enable_caching:
             print("Loading citation network from database...")
-            return CitationNetwork()
+            return CitationNetwork(scotus_only=scotus_only)
         if os.path.exists(cache_file_path):
             print("Loading citation network from disk cache...")
             try:
@@ -33,9 +33,9 @@ class CitationNetwork:
                     return pickle.load(cache_file)
             except BaseException as err:
                 print("Loading citation network from cache file failed with error:", err)
-                return CitationNetwork()  # Create a new network if fetching from cache fails
+                return CitationNetwork(scotus_only=scotus_only)  # Create a new network if fetching from cache fails
         else:  # Otherwise, construct a new network and cache it.
-            new_network = CitationNetwork()
+            new_network = CitationNetwork(scotus_only=scotus_only)
             try:
                 with open(cache_file_path, 'wb') as cache_file:
                     pickle.dump(new_network, cache_file)
