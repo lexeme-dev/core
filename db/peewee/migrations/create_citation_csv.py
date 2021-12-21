@@ -1,5 +1,5 @@
 from db.peewee.models import *
-from helpers import get_full_path
+from ingress.helpers import get_full_path
 import csv
 
 CITATION_CSV_PATH = 'data/citation_list.csv'

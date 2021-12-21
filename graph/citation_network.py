@@ -6,7 +6,7 @@ from sqlalchemy import select
 from db.sqlalchemy import get_session
 from db.sqlalchemy.models import Citation, Court
 from graph.network_edge_list import NetworkEdgeList
-from helpers import get_full_path
+from ingress.helpers import get_full_path
 
 CITATION_CSV_PATH = 'data/citation_list.csv'
 NETWORK_CACHE_PATH = 'tmp/network_cache.pik'
