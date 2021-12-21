@@ -31,17 +31,11 @@ class ClFileDownloader:
         for thread in threads:
             thread.join()
 
-    def get_download_url(self, resource_type: str, jurisdiction: str):
-        return f"{BASE_URL}/{resource_type}/{jurisdiction}.tar.gz"
-
-    def get_folder_path(self, resource_type: str, jurisdiction: str):
-        return get_full_path(os.path.join(BASE_CL_DIR, resource_type, jurisdiction))
-
     def get_data_folder(self, resource_type: str, jurisdiction: str):
         print(f"Downloading {resource_type} data for jurisdiction {jurisdiction}...")
-        tar_file_bytes = urllib.request.urlopen(self.get_download_url(resource_type, jurisdiction)).read()
+        tar_file_bytes = urllib.request.urlopen(self.__get_download_url(resource_type, jurisdiction)).read()
         print(f"Completed {resource_type} data download for jurisdiction {jurisdiction}, extracting...")
-        folder_path = self.get_folder_path(resource_type, jurisdiction)
+        folder_path = self.__get_folder_path(resource_type, jurisdiction)
         tarfile.open(fileobj=io.BytesIO(tar_file_bytes)).extractall(folder_path)
         print(f"Completed extraction of {resource_type} data for jurisdiction {jurisdiction}...")
         return folder_path
@@ -55,6 +49,12 @@ class ClFileDownloader:
         with open(decompressed_file_path, 'wb') as decompressed_file:
             decompressed_file.write(file_contents)
         print("Completed extraction of citations data...")
+
+    def __get_download_url(self, resource_type: str, jurisdiction: str):
+        return f"{BASE_URL}/{resource_type}/{jurisdiction}.tar.gz"
+
+    def __get_folder_path(self, resource_type: str, jurisdiction: str):
+        return get_full_path(os.path.join(BASE_CL_DIR, resource_type, jurisdiction))
 
 
 if __name__ == '__main__':
