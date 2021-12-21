@@ -17,7 +17,7 @@ class CitationNetwork:
     network_edge_list: NetworkEdgeList
 
     def __init__(self, directed=False, scotus_only=False):
-        self.network = self.construct_network(directed, scotus_only)
+        # self.network = self.construct_network(directed, scotus_only)
         self.network_edge_list = NetworkEdgeList(scotus_only)
 
     @staticmethod
