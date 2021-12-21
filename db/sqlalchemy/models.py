@@ -80,7 +80,7 @@ class Cluster(Base):
     year = Column(BigInteger)
     time = Column(BigInteger)
     searchable_case_name = Column(TSVECTOR)
-    court = Column(Text)
+    court = Column(Text, index=True)
     courtlistener_json_checksum = Column(String(32))
 
     __table_args__ = (
