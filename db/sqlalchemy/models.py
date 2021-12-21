@@ -31,7 +31,7 @@ class Court(str, Enum):
 class Citation(Base):
     __tablename__ = 'citation'
 
-    id = Column(BigInteger, Sequence('citation_seq'), primary_key=True)
+    id = Column(BigInteger, server_default=Sequence('citation_seq').next_value(), primary_key=True)
     citing_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     cited_opinion_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     depth = Column(BigInteger)
@@ -70,7 +70,7 @@ class Citation(Base):
 class Cluster(Base):
     __tablename__ = 'cluster'
 
-    id = Column(BigInteger, Sequence('cluster_seq'), primary_key=True)
+    id = Column(BigInteger, server_default=Sequence('cluster_seq').next_value(), primary_key=True)
     resource_id = Column(BigInteger, index=True, unique=True)
     case_name = Column(Text)
     reporter = Column(Text)
@@ -91,7 +91,7 @@ class Cluster(Base):
 class ClusterCitation(Base):
     __tablename__ = 'clustercitation'
 
-    id = Column(BigInteger, Sequence('clustercitation_seq'), primary_key=True)
+    id = Column(BigInteger, server_default=Sequence('clustercitation_seq').next_value(), primary_key=True)
     citing_cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'), index=True)
     cited_cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'), index=True)
     depth = Column(BigInteger)
@@ -100,7 +100,7 @@ class ClusterCitation(Base):
 class Opinion(Base):
     __tablename__ = 'opinion'
 
-    id = Column(BigInteger, Sequence('opinion_seq'), primary_key=True)
+    id = Column(BigInteger, server_default=Sequence('opinion_seq').next_value(), primary_key=True)
     resource_id = Column(BigInteger, index=True, unique=True)
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
@@ -122,7 +122,7 @@ class OpinionParenthetical(Base):
     __tablename__ = 'opinionparenthetical'
 
     # This column has a different integer type and sequence naming convention, would be good to fix in the future
-    id = Column(Integer, Sequence('opinionparenthetical_id_seq'), primary_key=True)
+    id = Column(Integer, server_default=Sequence('opinionparenthetical_id_seq').next_value(), primary_key=True)
     citing_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
     cited_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
     text = Column(Text, nullable=False)
@@ -131,7 +131,7 @@ class OpinionParenthetical(Base):
 class Similarity(Base):
     __tablename__ = 'similarity'
 
-    id = Column(BigInteger, Sequence('similarity_seq'), primary_key=True)
+    id = Column(BigInteger, server_default=Sequence('similarity_seq').next_value(), primary_key=True)
     opinion_a_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     opinion_b_id = Column(BigInteger, ForeignKey('opinion.resource_id'), index=True)
     similarity_index = Column(Float)
