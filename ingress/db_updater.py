@@ -37,7 +37,8 @@ class DbUpdater:
             print(f"Adding cluster data for jurisdiction {jur_name} to database...")
             self.process_cluster_data(self.__get_resource_dir_path(CLUSTER_PATH, jur_name), jurisdiction=jur_name)
             print(f"Adding opinion data for jurisdiction {jur_name} to database...")
-            self.process_opinion_data(self.__get_resource_dir_path(OPINION_PATH, jur_name), include_text=include_text, jurisdiction=jur_name)
+            self.process_opinion_data(self.__get_resource_dir_path(OPINION_PATH, jur_name), include_text=include_text,
+                                      jurisdiction=jur_name)
         print(f"Adding citation data to database...")
         self.process_citation_data(get_full_path(os.path.join(BASE_CL_DIR, CITATIONS_PATH)))
 
@@ -64,8 +65,10 @@ class DbUpdater:
                         cluster_data = json.loads(file_contents.decode('utf-8'))
                         date_filed = dateutil.parser.parse(cluster_data['date_filed']).replace(tzinfo=timezone.utc)
                         reporter = self.__get_reporter(cluster_data)
+                        case_name = cluster_data['case_name'] or cluster_data['case_name_full'] or cluster_data[
+                            'case_name_short']
                         new_record = dict(resource_id=cluster_data['id'],
-                                          case_name=cluster_data['case_name'],
+                                          case_name=case_name,
                                           cluster_uri=cluster_data['resource_uri'],
                                           docket_uri=cluster_data['docket'],
                                           citation_count=cluster_data['citation_count'],
@@ -120,13 +123,14 @@ class DbUpdater:
         print(
             f"Finished reading CL opinion data for jurisdiction {jurisdiction}, upserting {len(opinion_records)} records...")
         batch_size = 100 if include_text else DEFAULT_BATCH_SIZE
-        self.__batch_query(self.__upsert_opinions_to_db, opinion_records, batch_size=batch_size)
+        self.__batch_query(lambda records: self.__upsert_opinions_to_db(records, include_text), opinion_records, batch_size=batch_size)
         self.session.commit()
 
     def process_citation_data(self, citations_file):
         opinion_checksum_dict = self.__get_opinion_checksum_dict()
         # Big memory drinker, but worth it for the speed increase unless it becomes a problem.
-        citation_set = set(self.session.execute(select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)).all())
+        citation_set = set(
+            self.session.execute(select(Citation.citing_opinion_id, Citation.cited_opinion_id, Citation.depth)).all())
 
         citation_records = []
         with open(citations_file) as csv_file:
@@ -186,13 +190,14 @@ class DbUpdater:
                                                       courtlistener_json_checksum=query.excluded.courtlistener_json_checksum))
         self.session.execute(query)
 
-    def __upsert_opinions_to_db(self, clusters: List[dict]):
+    def __upsert_opinions_to_db(self, clusters: List[dict], include_text: bool):
         query = insert(Opinion).values(clusters)
+        conflict_update_dict = dict(cluster_id=query.excluded.cluster_id, cluster_uri=query.excluded.cluster_uri,
+                                    courtlistener_json_checksum=query.excluded.courtlistener_json_checksum)
+        if include_text:
+            conflict_update_dict['html_text'] = query.excluded.html_text
         query = query.on_conflict_do_update(index_elements=[Opinion.resource_id],
-                                            set_=dict(cluster_id=query.excluded.cluster_id,
-                                                      cluster_uri=query.excluded.cluster_uri,
-                                                      html_text=query.excluded.html_text,
-                                                      courtlistener_json_checksum=query.excluded.courtlistener_json_checksum))
+                                            set_=conflict_update_dict)
         self.session.execute(query)
 
     def __upsert_citations_to_db(self, citations: List[dict]):
