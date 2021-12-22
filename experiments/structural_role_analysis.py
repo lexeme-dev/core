@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from typing import Dict, List
-from ingress.helpers import get_full_path
+from utils.io import get_full_path
 from db.peewee.models import Citation
 
 STRUCTURAL_ROLE_FILE_PATH = 'data/structural_roles.csv'

@@ -5,7 +5,8 @@ import tarfile
 import threading
 import urllib.request
 
-from ingress.helpers import BASE_CL_DIR, CITATIONS_PATH, CLUSTER_PATH, OPINION_PATH, JURISDICTIONS, get_full_path
+from ingress.helpers import BASE_CL_DIR, CITATIONS_PATH, CLUSTER_PATH, OPINION_PATH, JURISDICTIONS
+from utils.io import get_full_path
 
 BASE_URL = "https://courtlistener.com/api/bulk-data"
 REMOTE_CITATIONS_PATH = "citations/all.csv.gz"

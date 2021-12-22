@@ -2,7 +2,7 @@ import csv
 
 from peewee import chunked
 from db.peewee.models import *
-from ingress.helpers import get_full_path
+from utils.io import get_full_path
 
 
 def drop_existing_citations():
