@@ -16,15 +16,14 @@ class ClFileDownloader:
         pass
 
     def download(self):
-        threads = []
         for jur in JURISDICTIONS:
-            threads.append(threading.Thread(target=self.get_data_folder, args=(CLUSTER_PATH, jur)))
-            threads.append(threading.Thread(target=self.get_data_folder, args=(OPINION_PATH, jur)))
-        threads.append(threading.Thread(target=self.get_citation_csv))
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+            threads = [threading.Thread(target=self.get_data_folder, args=(CLUSTER_PATH, jur)),
+                       threading.Thread(target=self.get_data_folder, args=(OPINION_PATH, jur))]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        self.get_citation_csv()
 
     def get_data_folder(self, resource_type: str, jurisdiction: str):
         print(f"Downloading {resource_type} data for jurisdiction {jurisdiction}...")
