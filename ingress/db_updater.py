@@ -14,6 +14,7 @@ from db.sqlalchemy import *
 from db.sqlalchemy.models import Cluster, Opinion, Court, Citation
 from ingress.helpers import BASE_CL_DIR, CLUSTER_PATH, OPINION_PATH, CITATIONS_PATH, JURISDICTIONS
 from utils.io import get_full_path
+from utils.logger import Logger
 
 DEFAULT_BATCH_SIZE = 10000
 HTML_TEXT_FIELDS = ['html_with_citations', 'html', 'html_lawbox', 'html_columbia', 'html_anon_2020', 'plain_text']
@@ -35,12 +36,12 @@ class DbUpdater:
         include_text_for_dict = {jur_name: True for jur_name in self.include_text_for}
         for jur_name in self.jurisdictions:
             include_text = include_text_for_dict.get(jur_name) or False
-            print(f"Adding cluster data for jurisdiction {jur_name} to database...")
+            Logger.info(f"Adding cluster data for jurisdiction {jur_name} to database...")
             self.process_cluster_data(self.__get_resource_dir_path(CLUSTER_PATH, jur_name), jurisdiction=jur_name)
-            print(f"Adding opinion data for jurisdiction {jur_name} to database...")
+            Logger.info(f"Adding opinion data for jurisdiction {jur_name} to database...")
             self.process_opinion_data(self.__get_resource_dir_path(OPINION_PATH, jur_name), include_text=include_text,
                                       jurisdiction=jur_name)
-        print(f"Adding citation data to database...")
+        Logger.info(f"Adding citation data to database...")
         self.process_citation_data(get_full_path(os.path.join(BASE_CL_DIR, CITATIONS_PATH)))
 
     def __get_resource_dir_path(self, resource_type: str, jur_name: str):
@@ -80,8 +81,8 @@ class DbUpdater:
                                           courtlistener_json_checksum=file_checksum)
                         cluster_records.append(new_record)
             except:
-                print(f'Failure on file {file}')
-        print(
+                Logger.info(f'Failure on file {file}')
+        Logger.info(
             f"Finished reading CL cluster data for jurisdiction {jurisdiction}, upserting {len(cluster_records)} records...")
         self.__batch_query(self.__upsert_clusters_to_db, cluster_records)
         self.session.commit()
@@ -120,8 +121,8 @@ class DbUpdater:
                             new_record['html_text'] = self.__get_html_text(opinion_data)
                         opinion_records.append(new_record)
             except:
-                print(f'Failure on file {file}')
-        print(
+                Logger.info(f'Failure on file {file}')
+        Logger.info(
             f"Finished reading CL opinion data for jurisdiction {jurisdiction}, upserting {len(opinion_records)} records...")
         batch_size = 100 if include_text else DEFAULT_BATCH_SIZE
         self.__batch_query(lambda records: self.__upsert_opinions_to_db(records, include_text), opinion_records, batch_size=batch_size)
@@ -147,8 +148,8 @@ class DbUpdater:
                                           depth=depth)
                         citation_records.append(new_record)
                 except Exception as e:
-                    print(f'Failure on citation file row {row}: {e}')
-        print(f"Finished reading CL citation data, upserting {len(citation_records)} records...")
+                    Logger.info(f'Failure on citation file row {row}: {e}')
+        Logger.info(f"Finished reading CL citation data, upserting {len(citation_records)} records...")
         self.__batch_query(self.__upsert_citations_to_db, citation_records, batch_size=100_000)
         self.session.commit()
 
