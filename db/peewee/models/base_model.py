@@ -1,5 +1,5 @@
 from peewee import Model
-from helpers import connect_to_database
+from db.peewee.helpers import connect_to_database
 
 db = connect_to_database()
 

@@ -2,7 +2,7 @@ from typing import Dict
 from math import sqrt, log
 from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
-from helpers import top_n
+from algorithms.helpers import top_n
 
 MAX_NUM_STEPS = 200000
 MAX_WALK_LENGTH = 5
