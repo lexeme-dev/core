@@ -1,7 +1,10 @@
-from typing import NamedTuple, Dict, Iterable
+from __future__ import annotations
+
+from collections import defaultdict
+from typing import NamedTuple, Dict, List
 import numpy as np
-from sqlalchemy import select, func
-from sqlalchemy.orm import contains_eager
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from db.sqlalchemy import get_session
 from db.sqlalchemy.models import *
@@ -18,45 +21,44 @@ class NetworkEdgeList:
     """
     An alternative representation of a network that is optimized for random sampling of neighbors
     """
+    scotus_only: bool
     edge_list: np.array
     node_metadata: Dict[int, NodeMetadata]
+    session: Session | None
 
     def __init__(self, scotus_only):
-        opinion_query = self.__init_queries(scotus_only)
-        self.__populate_edge_list(opinion_query)
+        self.scotus_only = scotus_only
+        self.session = get_session()  # At some point we will get better session management, pinky promise.
+        neighbor_dict = self.__get_neighbor_dict()
+        self.__populate_edge_list_and_metadata(neighbor_dict)
+        self.session.close()
+        self.session = None
 
-    def __init_queries(self, scotus_only):
-        with get_session() as s:
-            edge_list_size = s.execute(select(func.count(Citation.id))).scalar() * 2
-            self.edge_list = np.empty(edge_list_size, dtype='int32')
-            self.node_metadata = {}
-            opinion_query = (select(Opinion)
-                             .join(Opinion.citations)
-                             .options(contains_eager(Opinion.citations)))
-            if scotus_only:
-                opinion_query = Citation.where_court(opinion_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
-            opinion_query = opinion_query.order_by(Citation.citing_opinion_id, Citation.cited_opinion_id)
-            return s.execute(opinion_query).unique().scalars().all()
+    def __get_neighbor_dict(self) -> Dict[int, List[int]]:
+        edge_query = select(Citation.citing_opinion_id, Citation.cited_opinion_id)
+        if self.scotus_only:
+            edge_query = Citation.where_court(edge_query, citing_court=Court.SCOTUS, cited_court=Court.SCOTUS)
+        edges: List[Tuple[int, int]] = self.session.execute(edge_query).all()
+        opinion_neighbor_dict: Dict[int, List[int]] = defaultdict(list)
+        for (citing, cited) in edges:
+            opinion_neighbor_dict[citing].append(cited)
+            opinion_neighbor_dict[cited].append(citing)
+        # Kind of a dumb place to initialize this but we have the number of edges here so may as well.
+        self.edge_list = np.empty(len(edges) * 2, dtype='int32')
+        return opinion_neighbor_dict
 
-    def __populate_edge_list(self, opinion_iter: Iterable[Opinion]):
+    def __populate_edge_list_and_metadata(self, neighbor_dict: Dict[int, List[int]]):
+        self.node_metadata = {}
+        opinion_year_query = select(Opinion.resource_id, Cluster.year).join(Opinion.cluster)
+        if self.scotus_only:
+            opinion_year_query = opinion_year_query.filter(Cluster.court == Court.SCOTUS)
+        opinion_year_dict = {op_id: year for op_id, year in
+                             self.session.execute(opinion_year_query).all()}
         prev_index = 0
-        for opinion in opinion_iter:
-            num_neighbors = len(opinion.citations)
-            node_neighbors = np.empty(num_neighbors, dtype='int32')
-            for i, citation in enumerate(opinion.citations):
-                if citation.cited_opinion_id == opinion.resource_id:
-                    neighbor = citation.citing_opinion_id
-                else:
-                    neighbor = citation.cited_opinion_id
-                node_neighbors[i] = neighbor
+        for opinion_id, neighbors in neighbor_dict.items():
             start_idx = prev_index
-            end_idx = start_idx + len(node_neighbors)
-            year = None
-            try:
-                year = opinion.cluster.year
-            except:
-                pass
-            self.node_metadata[opinion.resource_id] = NodeMetadata(start=start_idx, end=end_idx,
-                                                                   length=len(node_neighbors), year=year)
-            self.edge_list[start_idx:end_idx] = node_neighbors
+            end_idx = start_idx + len(neighbors)
+            self.node_metadata[opinion_id] = NodeMetadata(start=start_idx, end=end_idx,
+                                                          length=len(neighbors), year=opinion_year_dict.get(opinion_id))
+            self.edge_list[start_idx:end_idx] = neighbors
             prev_index = end_idx
