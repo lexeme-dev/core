@@ -3,7 +3,7 @@
 from graph.citation_network import CitationNetwork
 import networkx as nx
 import pickle
-from helpers import get_names_for_id_collection
+from utils import get_names_for_id_collection
 
 from graphrole import RecursiveFeatureExtractor, RoleExtractor
 

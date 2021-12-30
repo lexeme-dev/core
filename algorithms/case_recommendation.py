@@ -3,6 +3,7 @@ from math import sqrt, log
 from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
 from algorithms.helpers import top_n
+from utils.logger import Logger
 
 MAX_NUM_STEPS = 200000
 MAX_WALK_LENGTH = 5
@@ -40,7 +41,7 @@ class CaseRecommendation:
             year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
             # overall_node_freq_dict[key] = self.relevance_adjusted_score(value, num_neighbors=curr_node_metadata.length)
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
-        print(top_n_recommendations)
+        Logger.info(top_n_recommendations)
         return top_n_recommendations
 
     def recommendations_for_case(self, opinion_id, num_recommendations,
