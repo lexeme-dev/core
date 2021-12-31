@@ -49,6 +49,15 @@ def get_case(resource_id: int):
         abort(HTTPStatus.NOT_FOUND)
 
 
+@app.route('/cases/<int:resource_id>/html')
+def get_case_html(resource_id: int):
+    try:
+        opinion = Opinion.get(resource_id=resource_id)
+        return opinion.html_text
+    except Opinion.DoesNotExist:
+        abort(HTTPStatus.NOT_FOUND)
+
+
 @app.route('/cases/similar')
 def get_similar_cases():
     case_resource_ids = request.args.getlist('cases')
