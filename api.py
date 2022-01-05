@@ -14,11 +14,20 @@ from utils.logger import Logger
 
 app = Flask(__name__)
 CORS(app)
-citation_network = CitationNetwork.get_citation_network(enable_caching=True)
-Logger.info("Loaded citation network.")
-similarity = CaseSimilarity(citation_network)
-clustering = CaseClustering(citation_network)
-recommendation = CaseRecommendation(citation_network)
+citation_network = None
+similarity = None
+clustering = None
+recommendation = None
+
+
+@app.before_first_request
+def initialize_app():
+    global citation_network, similarity, clustering, recommendation
+    citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+    Logger.info("Loaded citation network.")
+    similarity = CaseSimilarity(citation_network)
+    clustering = CaseClustering(citation_network)
+    recommendation = CaseRecommendation(citation_network)
 
 
 @app.after_request
