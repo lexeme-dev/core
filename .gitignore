@@ -2,3 +2,4 @@ data/
 tmp/
 __pycache__/
 resources/
+*.egg-info/

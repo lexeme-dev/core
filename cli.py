@@ -28,7 +28,3 @@ def search(query: str, num_cases: int):
     for op in search_results:
         output += f"{pretty_print_opinion(op)}\n\n"
     click.echo(output.strip())
-
-
-if __name__ == '__main__':
-    cli()
