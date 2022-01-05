@@ -1,6 +1,6 @@
 from typing import Iterable, List, cast
 from db.peewee.models import Opinion, Cluster
-from algorithms.helpers import format_reporter
+from utils.format import format_reporter
 import eyecite
 from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
 

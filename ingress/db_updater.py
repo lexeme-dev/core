@@ -9,7 +9,7 @@ import dateutil.parser
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
-from algorithms.helpers import format_reporter
+from utils.format import format_reporter
 from db.sqlalchemy import *
 from db.sqlalchemy.models import Cluster, Opinion, Court, Citation
 from ingress.helpers import BASE_CL_DIR, CLUSTER_PATH, OPINION_PATH, CITATIONS_PATH, JURISDICTIONS

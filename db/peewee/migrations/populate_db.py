@@ -5,7 +5,7 @@ import dateutil.parser
 from datetime import timezone
 from db.peewee.models import db, Cluster, Opinion, Citation
 from utils.io import get_full_path
-from algorithms.helpers import format_reporter
+from utils.format import format_reporter
 
 
 def create_db_tables():
