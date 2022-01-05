@@ -4,7 +4,9 @@ import os
 import tarfile
 import threading
 import urllib.request
+from typing import List
 
+from db.sqlalchemy.models import Court
 from ingress.helpers import BASE_CL_DIR, CITATIONS_PATH, CLUSTER_PATH, OPINION_PATH, JURISDICTIONS
 from utils.io import get_full_path
 from utils.logger import Logger
@@ -14,11 +16,13 @@ REMOTE_CITATIONS_PATH = "citations/all.csv.gz"
 
 
 class ClFileDownloader:
-    def __init__(self):
-        pass
+    jurisdictions: List[Court]
+
+    def __init__(self, jurisdictions: List[Court]):
+        self.jurisdictions = jurisdictions
 
     def download(self):
-        for jur in JURISDICTIONS:
+        for jur in self.jurisdictions:
             threads = [threading.Thread(target=self.get_data_folder, args=(CLUSTER_PATH, jur)),
                        threading.Thread(target=self.get_data_folder, args=(OPINION_PATH, jur))]
             for thread in threads:
@@ -54,5 +58,5 @@ class ClFileDownloader:
 
 
 if __name__ == '__main__':
-    downloader = ClFileDownloader()
+    downloader = ClFileDownloader(jurisdictions=JURISDICTIONS)
     downloader.download()
