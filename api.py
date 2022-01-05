@@ -4,19 +4,18 @@ from http import HTTPStatus
 from io import BufferedReader
 from playhouse.shortcuts import model_to_dict
 
-from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity
-# TODO: Refactor this into a CaseOyezBrief class to standardize with the above names
-from algorithms import case_oyez_brief
+from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity, case_oyez_brief
 from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from db.peewee.helpers import model_list_to_json, model_list_to_dicts
 from extraction.pdf_engine import PdfEngine
 from extraction.citation_extractor import CitationExtractor
 from graph import CitationNetwork
+from utils.logger import Logger
 
 app = Flask(__name__)
 CORS(app)
 citation_network = CitationNetwork.get_citation_network(enable_caching=True)
-print("Loaded citation network.")
+Logger.info("Loaded citation network.")
 similarity = CaseSimilarity(citation_network)
 clustering = CaseClustering(citation_network)
 recommendation = CaseRecommendation(citation_network)
