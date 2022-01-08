@@ -12,9 +12,15 @@ def ts_match(vector, query):
 
 def connect_to_database():
     load_dotenv()
-    db_host, db_name, db_username, db_password, db_port = (os.getenv('DB_HOST'), os.getenv('DB_NAME'),
-                                                           os.getenv('DB_USERNAME'), os.getenv('DB_PASSWORD'),
-                                                           os.getenv('DB_PORT'))
+    if os.getenv("REMOTE_DB"):
+        db_host, db_name, db_username, db_password, db_port = (os.getenv('REMOTE_DB_HOST'), os.getenv('REMOTE_DB_NAME'),
+                                                               os.getenv('REMOTE_DB_USERNAME'),
+                                                               os.getenv('REMOTE_DB_PASSWORD'),
+                                                               os.getenv('REMOTE_DB_PORT'))
+    else:
+        db_host, db_name, db_username, db_password, db_port = (os.getenv('DB_HOST'), os.getenv('DB_NAME'),
+                                                               os.getenv('DB_USERNAME'), os.getenv('DB_PASSWORD'),
+                                                               os.getenv('DB_PORT'))
     return PostgresqlDatabase(db_name, user=db_username, password=db_password, host=db_host, port=db_port)
 
 
