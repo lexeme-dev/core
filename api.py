@@ -61,8 +61,10 @@ def get_case(resource_id: int):
 def get_case_html(resource_id: int):
     try:
         opinion = Opinion.get(resource_id=resource_id)
+        if not opinion.html_text:
+            raise FileNotFoundError()
         return opinion.html_text
-    except Opinion.DoesNotExist:
+    except (Opinion.DoesNotExist, FileNotFoundError):
         abort(HTTPStatus.NOT_FOUND)
 
 
