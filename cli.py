@@ -73,8 +73,9 @@ def case():
 def case_lookup(resource_id: int):
     with get_session() as s:
         op = s.execute(select(Opinion).filter_by(resource_id=resource_id)).scalar()
-    click.echo(pretty_print_opinion(op))
-
+        if not op:
+            raise ValueError(f"Resource id {resource_id} not located in current db.")
+        click.echo(pretty_print_opinion(op))
 
 @case.command(name='search', help='Search cases by name')
 @click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of case results')
