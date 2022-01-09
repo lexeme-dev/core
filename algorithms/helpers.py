@@ -16,7 +16,3 @@ def top_n(value_dict: dict, n: int) -> Dict[str, float]:
     for nth_largest in heapq.nlargest(min(n, len(collection)), collection):
         top_n_items[nth_largest[1]] = nth_largest[0]  # Reconstruct the dict
     return top_n_items
-
-
-def format_reporter(volume, reporter, page):
-    return f"{volume} {reporter} {page}"
