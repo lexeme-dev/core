@@ -83,11 +83,10 @@ def get_similar_cases():
 def get_recommended_cases():
     case_resource_ids = frozenset(map(int, request.args.getlist('cases')))
     court_ids = frozenset(map(str, request.args.getlist('courts')))
-    Logger.info(court_ids)
     max_cases = int(request.args.get('max_cases') or 10)
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    recommendations = recommendation.recommendations(case_resource_ids, max_cases, court_ids)
+    recommendations = recommendation.recommendations(case_resource_ids, max_cases, courts=court_ids)
     recommended_opinions = sorted(
         Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
         key=lambda op: recommendations[op.resource_id],

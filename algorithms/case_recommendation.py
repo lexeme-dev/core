@@ -22,7 +22,7 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, court: frozenset[Court]=None,
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]=None,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
@@ -39,9 +39,9 @@ class CaseRecommendation:
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
         average_case_year = self.average_year_of_cases(opinion_ids)
         # want this to be done before filtering out years
-        if court:
+        if courts:
             overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items() \
-                                      if self.citation_network.network_edge_list.node_metadata[k] in court}
+                                      if self.citation_network.network_edge_list.node_metadata[k].court in courts}
         for key, value in overall_node_freq_dict.items():
             curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
             year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
