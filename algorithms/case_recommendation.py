@@ -4,6 +4,8 @@ from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
 from algorithms.helpers import top_n
 from utils.logger import Logger
+# not sure if this is right
+from db.sqlalchemy.models import Court
 
 MAX_NUM_STEPS = 200000
 MAX_WALK_LENGTH = 5
@@ -20,7 +22,7 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations,
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, court: frozenset[Court]=None,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
@@ -36,6 +38,10 @@ class CaseRecommendation:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
         average_case_year = self.average_year_of_cases(opinion_ids)
+        # want this to be done before filtering out years
+        if court is not None:
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items \
+                                      if self.citation_network.network_edge_list.node_metadata[k] in court}
         for key, value in overall_node_freq_dict.items():
             curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
             year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
