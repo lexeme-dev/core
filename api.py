@@ -82,6 +82,8 @@ def get_similar_cases():
 @app.route('/cases/recommendations')
 def get_recommended_cases():
     case_resource_ids = frozenset(map(int, request.args.getlist('cases')))
+    court_ids = frozenset(map(str, request.args.getlist('courts')))
+    Logger.info(court_ids)
     max_cases = int(request.args.get('max_cases') or 10)
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
