@@ -40,7 +40,7 @@ class CaseRecommendation:
         average_case_year = self.average_year_of_cases(opinion_ids)
         # want this to be done before filtering out years
         if court:
-            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items \
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items() \
                                       if self.citation_network.network_edge_list.node_metadata[k] in court}
         for key, value in overall_node_freq_dict.items():
             curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
