@@ -15,6 +15,7 @@ class NodeMetadata(NamedTuple):
     end: int
     length: int
     year: int
+    court: str
 
 
 class NetworkEdgeList:
@@ -50,15 +51,24 @@ class NetworkEdgeList:
     def __populate_edge_list_and_metadata(self, neighbor_dict: Dict[int, List[int]]):
         self.node_metadata = {}
         opinion_year_query = select(Opinion.resource_id, Cluster.year).join(Opinion.cluster)
+        opinion_court_query = select(Opinion.resource_id, Cluster.court).join(Opinion.cluster)
         if self.scotus_only:
             opinion_year_query = opinion_year_query.filter(Cluster.court == Court.SCOTUS)
         opinion_year_dict = {op_id: year for op_id, year in
                              self.session.execute(opinion_year_query).all()}
+        opinion_court_dict = {op_id: court for op_id, court in
+                             self.session.execute(opinion_court_query).all()}
         prev_index = 0
         for opinion_id, neighbors in neighbor_dict.items():
             start_idx = prev_index
             end_idx = start_idx + len(neighbors)
-            self.node_metadata[opinion_id] = NodeMetadata(start=start_idx, end=end_idx,
-                                                          length=len(neighbors), year=opinion_year_dict.get(opinion_id))
+            self.node_metadata[opinion_id] = \
+                NodeMetadata(
+                    start=start_idx,
+                    end=end_idx,
+                    length=len(neighbors),
+                    court=opinion_court_dict.get(opinion_id),
+                    year=opinion_year_dict.get(opinion_id)
+                )
             self.edge_list[start_idx:end_idx] = neighbors
             prev_index = end_idx
