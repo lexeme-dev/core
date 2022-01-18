@@ -123,19 +123,19 @@ def case_recall(cases: (Tuple[int], int), court: Tuple[str], numtrials: int, sam
         cases = choice(citation_network.network_edge_list.edge_list, size=cases)
     overall_top1 = 0
     overall_top5 = 0
-    overall_top10 = 0
+    overall_top20 = 0
     for c in cases:
         md = citation_network.network_edge_list.node_metadata[c]
         neighbors = list(citation_network.network_edge_list.edge_list[md.start:md.end])
         top1 = 0
         top5 = 0
-        top10 = 0
+        top20 = 0
         for i in range(numtrials):
             removed = neighbors.pop(random.randrange(len(neighbors)))
             same_court = (citation_network.network_edge_list.node_metadata[removed].court,) if samecourt else ()
-            recommendations = list(recommendation.recommendations(frozenset(neighbors), 10, courts=frozenset(court + same_court), ignore_opinion_ids=frozenset([c])).keys())
+            recommendations = list(recommendation.recommendations(frozenset(neighbors), 20, courts=frozenset(court + same_court), ignore_opinion_ids=frozenset([c])).keys())
             if removed in recommendations:
-                top10 += 1
+                top20 += 1
             if removed in recommendations[:5]:
                 top5 += 1
             if removed == recommendations[0]:
@@ -143,9 +143,12 @@ def case_recall(cases: (Tuple[int], int), court: Tuple[str], numtrials: int, sam
             neighbors.append(removed)
         overall_top1 += top1
         overall_top5 += top5
-        overall_top10 += top10
-        click.echo(f"For case {c} after {numtrials} trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop10: {top10}")
-    click.echo(f"For {len(cases)} cases after {numtrials}  trials each:\n\ttop1: {overall_top1}\n\ttop5: {overall_top5}\n\ttop10: {overall_top10}")
+        overall_top20 += top20
+        click.echo(f"For case {c} after {numtrials} trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop20: {top20}")
+    overall_top1 = 100 * overall_top1 / (numtrials * len(cases))
+    overall_top5 = 100 * overall_top5 / (numtrials * len(cases))
+    overall_top20 = 100 * overall_top20 / (numtrials * len(cases))
+    click.echo(f"For {len(cases)} cases after {numtrials}  trials each:\n\ttop1: {overall_top1}%\n\ttop5: {overall_top5}%\n\ttop20: {overall_top20}%")
 
 @case.command(name='recall', help='Measure quality of recommendations for a given case.')
 @click.argument('cases', nargs=-1, type=int)
@@ -156,8 +159,8 @@ def cli_case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, sameco
     case_recall(cases, court, numtrials, samecourt)
 
 @case.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
-@click.option('-c', '--numcases', default=10, help='Number of cases to test recall for.')
-@click.option('-t', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('-c', '--numcases', default=20, help='Number of cases to test recall for.')
+@click.option('-t', '--numtrials', default=5, help='Number of trials to do for a court.')
 @click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
 def cli_case_recall(numcases: int, numtrials: int, samecourt: bool):
     case_recall(numcases, (), numtrials, samecourt)
