@@ -23,14 +23,15 @@ class CaseRecommendation:
         self.random_walker = RandomWalker(self.citation_network)
 
     def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]=None,
-                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
+                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS, ignore_opinion_ids: frozenset=None) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
             curr_max_num_steps = int(weight * max_num_steps)
             curr_freq_dict = self.recommendations_for_case(int(opinion_id), num_recommendations=None,
                                                            max_walk_length=max_walk_length,
-                                                           max_num_steps=curr_max_num_steps)
+                                                           max_num_steps=curr_max_num_steps,
+                                                           ignore_opinion_ids=ignore_opinion_ids)
             for node, freq in curr_freq_dict.items():
                 if node in opinion_ids:
                     continue
@@ -50,7 +51,7 @@ class CaseRecommendation:
         Logger.info(top_n_recommendations)
         return top_n_recommendations
 
-    def recommendations_for_case(self, opinion_id, num_recommendations,
+    def recommendations_for_case(self, opinion_id, num_recommendations, ignore_opinion_ids: frozenset= None,
                                  max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         """
         Random-walk recommendation algorithm to return relevant cases given a case ID. Heavily based on
@@ -65,7 +66,7 @@ class CaseRecommendation:
         node_freq_dict = {}
         num_steps = 0
         while num_steps < max_num_steps:  # Keep a constant worst-case bound on execution time
-            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5)
+            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5, ignore_opinion_ids=ignore_opinion_ids)
             if random_walk_dest == opinion_id:
                 continue
             if random_walk_dest not in node_freq_dict:

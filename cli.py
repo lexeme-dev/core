@@ -108,3 +108,33 @@ def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
         )
         for op in ro:
             click.echo(pretty_print_opinion(op))
+
+@case.command(name='recall', help='Measure quality of recommendations for a given case.')
+@click.argument('cases', nargs=-1, type=int)
+@click.option('-c', '--court', multiple=True, default=[], help='Filter to a specific court id (can be provided multiple times)')
+@click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
+def case_recommend(cases: List[int], court: List[str], numtrials: int):
+    from algorithms import CaseRecommendation
+    from extraction.citation_extractor import CitationExtractor
+    from graph import CitationNetwork
+    from db.peewee.models import Opinion, Cluster
+    import random
+    citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+    recommendation = CaseRecommendation(citation_network)
+    for c in cases:
+        md = citation_network.network_edge_list.node_metadata[c]
+        neighbors = list(citation_network.network_edge_list.edge_list[md.start:md.end])
+        top1 = 0
+        top5 = 0
+        top10 = 0
+        for i in range(numtrials):
+            removed = neighbors.pop(random.randrange(len(neighbors)))
+            recommendations = list(recommendation.recommendations(frozenset(neighbors), 10, courts=frozenset(court), ignore_opinion_ids=frozenset([c])).keys())
+            if removed in recommendations:
+                top10 += 1
+            if removed in recommendations[:5]:
+                top5 += 1
+            if removed == recommendations[0]:
+                top1 += 1
+            neighbors.append(removed)
+        click.echo(f"For case {c} after 10 trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop10: {top10}")
