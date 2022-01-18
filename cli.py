@@ -109,19 +109,21 @@ def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[str]):
         for op in ro:
             click.echo(pretty_print_opinion(op))
 
-@case.command(name='recall', help='Measure quality of recommendations for a given case.')
-@click.argument('cases', nargs=-1, type=int)
-@click.option('-c', '--court', multiple=True, default=[], help='Filter topN results to a specific court id (can be provided multiple times)')
-@click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
-@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
-def case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt: bool):
+def case_recall(cases: (Tuple[int], int), court: Tuple[str], numtrials: int, samecourt: bool):
     from algorithms import CaseRecommendation
     from extraction.citation_extractor import CitationExtractor
     from graph import CitationNetwork
     from db.peewee.models import Opinion, Cluster
     import random
+    from numpy.random import choice
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     recommendation = CaseRecommendation(citation_network)
+    if isinstance(cases, int):
+        # cases will be selected in proportion to how often they're mentioned --- this seems good
+        cases = choice(citation_network.network_edge_list.edge_list, size=cases)
+    overall_top1 = 0
+    overall_top5 = 0
+    overall_top10 = 0
     for c in cases:
         md = citation_network.network_edge_list.node_metadata[c]
         neighbors = list(citation_network.network_edge_list.edge_list[md.start:md.end])
@@ -139,4 +141,23 @@ def case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt:
             if removed == recommendations[0]:
                 top1 += 1
             neighbors.append(removed)
-        click.echo(f"For case {c} after 10 trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop10: {top10}")
+        overall_top1 += top1
+        overall_top5 += top5
+        overall_top10 += top10
+        click.echo(f"For case {c} after {numtrials} trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop10: {top10}")
+    click.echo(f"For {len(cases)} cases after {numtrials}  trials each:\n\ttop1: {overall_top1}\n\ttop5: {overall_top5}\n\ttop10: {overall_top10}")
+
+@case.command(name='recall', help='Measure quality of recommendations for a given case.')
+@click.argument('cases', nargs=-1, type=int)
+@click.option('-c', '--court', multiple=True, default=[], help='Filter topN results to a specific court id (can be provided multiple times)')
+@click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
+def cli_case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt: bool):
+    case_recall(cases, court, numtrials, samecourt)
+
+@case.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
+@click.option('-c', '--numcases', default=10, help='Number of cases to test recall for.')
+@click.option('-t', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
+def cli_case_recall(numcases: int, numtrials: int, samecourt: bool):
+    case_recall(numcases, (), numtrials, samecourt)
