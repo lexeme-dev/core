@@ -10,7 +10,7 @@ from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
 from ingress.helpers import JURISDICTIONS
 from utils.format import pretty_print_opinion
-from typing import List
+from typing import Tuple
 
 
 @click.group()
@@ -92,7 +92,7 @@ def case_search(query: str, num_cases: int):
 @click.argument("bookmarks", nargs=-1, type=int)
 @click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of recommmendation results')
 @click.option('-c', '--court', multiple=True, default=[], help='Filter to a specific court id (can be provided multiple times)')
-def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
+def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[str]):
     from algorithms import CaseRecommendation
     from extraction.citation_extractor import CitationExtractor
     from graph import CitationNetwork
@@ -111,9 +111,10 @@ def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
 
 @case.command(name='recall', help='Measure quality of recommendations for a given case.')
 @click.argument('cases', nargs=-1, type=int)
-@click.option('-c', '--court', multiple=True, default=[], help='Filter to a specific court id (can be provided multiple times)')
+@click.option('-c', '--court', multiple=True, default=[], help='Filter topN results to a specific court id (can be provided multiple times)')
 @click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
-def case_recommend(cases: List[int], court: List[str], numtrials: int):
+@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
+def case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt: bool):
     from algorithms import CaseRecommendation
     from extraction.citation_extractor import CitationExtractor
     from graph import CitationNetwork
@@ -129,7 +130,8 @@ def case_recommend(cases: List[int], court: List[str], numtrials: int):
         top10 = 0
         for i in range(numtrials):
             removed = neighbors.pop(random.randrange(len(neighbors)))
-            recommendations = list(recommendation.recommendations(frozenset(neighbors), 10, courts=frozenset(court), ignore_opinion_ids=frozenset([c])).keys())
+            same_court = (citation_network.network_edge_list.node_metadata[removed].court,) if samecourt else ()
+            recommendations = list(recommendation.recommendations(frozenset(neighbors), 10, courts=frozenset(court + same_court), ignore_opinion_ids=frozenset([c])).keys())
             if removed in recommendations:
                 top10 += 1
             if removed in recommendations[:5]:
