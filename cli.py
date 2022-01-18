@@ -10,6 +10,7 @@ from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
 from ingress.helpers import JURISDICTIONS
 from utils.format import pretty_print_opinion
+from typing import List
 
 
 @click.group()
@@ -86,3 +87,24 @@ def case_search(query: str, num_cases: int):
     for op in search_results:
         output += f"{pretty_print_opinion(op)}\n\n"
     click.echo(output.strip())
+
+@case.command(name='recommend', help='Produce recommendations for a set of bookmarked cases.')
+@click.argument("bookmarks", nargs=-1, type=int)
+@click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of recommmendation results')
+@click.option('-c', '--court', multiple=True, default=[], help='Filter to a specific court id (can be provided multiple times)')
+def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
+    from algorithms import CaseRecommendation
+    from extraction.citation_extractor import CitationExtractor
+    from graph import CitationNetwork
+    from db.peewee.models import Opinion, Cluster
+    citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+    recommendation = CaseRecommendation(citation_network)
+    recommendations = recommendation.recommendations(frozenset(bookmarks), num_cases, courts=frozenset(court))
+    with get_session() as s:
+        ro = sorted(
+            Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
+            key=lambda op: recommendations[op.resource_id],
+            reverse=True
+        )
+        for op in ro:
+            click.echo(pretty_print_opinion(op))
