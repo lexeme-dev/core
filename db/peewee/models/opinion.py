@@ -13,10 +13,18 @@ class Opinion(BaseModel):
     parentheticals: Optional[List[str]]
     contexts: Optional[List[str]]
 
-    def ingest_parenthetical(parenthetical):
+    def ingest_parentheticals(self, parenthetical):
         """ Someday we may not want to just append """
-        self.parentheticals.append(parenthetical)
+        try:
+            self.parentheticals.append(parenthetical)
+        except AttributeError:
+            self.parentheticals = []
+            self.parentheticals.append(parenthetical)
 
-    def ingest_context(context):
+    def ingest_contexts(self, context):
         """ Someday we may not want to just append """
-        self.contexts.append(context)
+        try:
+            self.contexts.append(context)
+        except AttributeError:
+            self.contexts = []
+            self.contexts.append(context)

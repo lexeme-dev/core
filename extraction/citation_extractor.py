@@ -5,7 +5,9 @@ import eyecite
 from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
 from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer
 
-class OneTimeTokenizer(AhocorasickTokenizer):
+STOP_WORDS = set(['a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't", 'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by', "can't", 'cannot', 'could', "couldn't", 'did', "didn't", 'do', 'does', "doesn't", 'doing', "don't", 'down', 'during', 'each', 'few', 'for', 'from', 'further', 'had', "hadn't", 'has', "hasn't", 'have', "haven't", 'having', 'he', "he'd", "he'll", "he's", 'her', 'here', "here's", 'hers', 'herself', 'him', 'himself', 'his', 'how', "how's", 'i', "i'd", "i'll", "i'm", "i've", 'if', 'in', 'into', 'is', "isn't", 'it', "it's", 'its', 'itself', "let's", 'me', 'more', 'most', "mustn't", 'my', 'myself', 'no', 'nor', 'not', 'of', 'off', 'on', 'once', 'only', 'or', 'other', 'ought', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'same', "shan't", 'she', "she'd", "she'll", "she's", 'should', "shouldn't", 'so', 'some', 'such', 'than', 'that', "that's", 'the', 'their', 'theirs', 'them', 'themselves', 'then', 'there', "there's", 'these', 'they', "they'd", "they'll", "they're", "they've", 'this', 'those', 'through', 'to', 'too', 'under', 'until', 'up', 'very', 'was', "wasn't", 'we', "we'd", "we'll", "we're", "we've", 'were', "weren't", 'what', "what's", 'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's", 'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're", "you've", 'your', 'yours', 'yourself', 'yourselves', ' '])
+
+class OneTimeTokenizer(Tokenizer):
     """
     Wrap the CourtListener tokenizer to save tokenization results.
     """
@@ -15,7 +17,8 @@ class OneTimeTokenizer(AhocorasickTokenizer):
 
     def tokenize(self, text: str):
         if not self.words or self.cit_toks:
-            self.words, self.cit_toks = super().tokenize(text)
+            # some of the static methods in AhocorasickTokenizer don't like children.
+            self.words, self.cit_toks = AhocorasickTokenizer().tokenize(text)
         return self.words, self.cit_toks
 
 class CitationExtractor:
@@ -30,7 +33,7 @@ class CitationExtractor:
         self.tokenizer = OneTimeTokenizer()
         return list(eyecite.get_citations(self.unstructured_text, tokenizer=self.tokenizer))
 
-    def get_extracted_citations(self, context_slice: slice) -> List[Opinion]:
+    def get_extracted_citations(self, context_slice: slice=slice(-64, 64)) -> List[Opinion]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
         reporter_resource_dict = {format_reporter(res.citation.groups.get('volume'), res.citation.groups.get('reporter'), res.citation.groups.get('page')): res
                                   for res in cited_resources}
@@ -43,9 +46,9 @@ class CitationExtractor:
                 if isinstance(citation, CaseCitation):
                     if citation.metadata.parenthetical is not None:
                         parentheticals.append(citation.metadata.parenthetical)
-                    start = max(0, citation.index - context_slice.start)
+                    start = max(0, citation.index + context_slice.start)
                     stop = min(len(self.tokenizer.words), citation.index + context_slice.stop)
-                    contexts.append([w for w in self.tokenizer.words[start:stop] if isinstance(w, str)])
+                    contexts.append([w.lower() for w in self.tokenizer.words[start:stop] if isinstance(w, str) and not w.lower() in STOP_WORDS])
             opinion.ingest_parentheticals(parentheticals)
             opinion.ingest_contexts(contexts)
             extracted_citations.append(opinion)
