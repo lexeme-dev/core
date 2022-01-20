@@ -3,7 +3,20 @@ from db.peewee.models import Opinion, Cluster
 from utils.format import format_reporter
 import eyecite
 from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
+from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer
 
+class OneTimeTokenizer(AhocorasickTokenizer):
+    """
+    Wrap the CourtListener tokenizer to save tokenization results.
+    """
+    def __init__(self):
+        self.words = []
+        self.cit_toks = []
+
+    def tokenize(self, text: str):
+        if not self.words or self.cit_toks:
+            self.words, self.cit_toks = super().tokenize(text)
+        return self.words, self.cit_toks
 
 class CitationExtractor:
     unstructured_text: str
@@ -14,9 +27,10 @@ class CitationExtractor:
         self.unstructured_text = cleaned_text
 
     def get_citations(self) -> List[CitationBase]:
-        return list(eyecite.get_citations(self.unstructured_text))
+        self.tokenizer = OneTimeTokenizer()
+        return list(eyecite.get_citations(self.unstructured_text, tokenizer=self.tokenizer))
 
-    def get_extracted_citations(self) -> List[Opinion]:
+    def get_extracted_citations(self, context_slice: slice) -> List[Opinion]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
         reporter_resource_dict = {format_reporter(res.citation.groups.get('volume'), res.citation.groups.get('reporter'), res.citation.groups.get('page')): res
                                   for res in cited_resources}
@@ -24,11 +38,16 @@ class CitationExtractor:
         extracted_citations = []
         for opinion in opinions:
             parentheticals = []
+            contexts = []
             for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
-                if isinstance(citation, CaseCitation) \
-                        and citation.metadata.parenthetical is not None:
-                    parentheticals.append(citation.metadata.parenthetical)
-            opinion.parentheticals = parentheticals
+                if isinstance(citation, CaseCitation):
+                    if citation.metadata.parenthetical is not None:
+                        parentheticals.append(citation.metadata.parenthetical)
+                    start = max(0, citation.index - context_slice.start)
+                    stop = min(len(self.tokenizer.words), citation.index + context_slice.stop)
+                    contexts.append([w for w in self.tokenizer.words[start:stop] if isinstance(w, str)])
+            opinion.ingest_parentheticals(parentheticals)
+            opinion.ingest_contexts(contexts)
             extracted_citations.append(opinion)
         return extracted_citations
 
