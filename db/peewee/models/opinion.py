@@ -11,3 +11,12 @@ class Opinion(BaseModel):
     cluster = ForeignKeyField(Cluster, field='resource_id', backref='opinion')
 
     parentheticals: Optional[List[str]]
+    contexts: Optional[List[str]]
+
+    def ingest_parenthetical(parenthetical):
+        """ Someday we may not want to just append """
+        self.parentheticals.append(parenthetical)
+
+    def ingest_context(context):
+        """ Someday we may not want to just append """
+        self.contexts.append(context)
