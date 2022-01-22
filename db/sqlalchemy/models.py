@@ -116,6 +116,10 @@ class Opinion(Base):
     citations = relationship("Citation",
                              primaryjoin="or_(Opinion.resource_id == Citation.cited_opinion_id, Opinion.resource_id == Citation.citing_opinion_id)",
                              overlaps="citing_opinion,cited_opinion,in_citations,out_citations")
+    citation_contexts = relationship("CitationContext", primaryjoin="Opinion.resource_id == CitationContext.cited_opinion_id",
+                                backref="cited_opinion")
+    opinion_parentheticals = relationship("OpinionParenthetical", primaryjoin="Opinion.resource_id == OpinionParenthetical.cited_opinion_id",
+                                backref="cited_opinion")
 
 
 class OpinionParenthetical(Base):
