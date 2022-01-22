@@ -128,6 +128,14 @@ class OpinionParenthetical(Base):
     text = Column(Text, nullable=False)
 
 
+class CitationContext(Base):
+    __tablename__ = 'citationcontext'
+    id = Column(Integer, server_default=Sequence('citationcontext_id_seq').next_value(), primary_key=True)
+    citing_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
+    cited_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
+    text = Column(Text, nullable=False)
+    
+
 class Similarity(Base):
     __tablename__ = 'similarity'
 
