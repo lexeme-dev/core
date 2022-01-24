@@ -57,3 +57,11 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128,128)
                                                        text=" ".join([str(s) for s in tokenizer.words[start:stop]])))
         opinions.append(opinion)
     return opinions
+
+def populate_all_db_contexts():
+    from db.sqlalchemy.helpers import get_session
+    for op in s.execute(select(Opinion)).iterator:
+        s = get_session()
+        populate_db_contexts(s, op.resource_id)
+        s.commit()
+        print(f"Completed {op.resource_id}!")
