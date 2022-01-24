@@ -1,5 +1,6 @@
 from typing import Iterable, List, cast
 from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext
+from bs4 import BeautifulSoup
 from sqlalchemy import select
 from utils.format import format_reporter
 import eyecite
@@ -28,9 +29,10 @@ class OneTimeTokenizer(Tokenizer):
         return self.words, self.cit_toks
 
 
-def populate_db_contexts(session, opinion_id: int):
+def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128,128)):
     unstructured_html = session.query(Opinion).filter(Opinion.resource_id==opinion_id).first().html_text
-    clean_text = unstructured_html.replace("U. S.", "U.S.")
+    unstructured_text = BeautifulSoup(unstructured_html, features="lxml").text
+    clean_text = unstructured_text.replace("U. S.", "U.S.")
     tokenizer = OneTimeTokenizer()
     citations = list(eyecite.get_citations(clean_text, tokenizer=tokenizer))
     cited_resources = eyecite.resolve_citations(citations)
@@ -38,21 +40,20 @@ def populate_db_contexts(session, opinion_id: int):
                               for res in cited_resources}
     stmt = select(Opinion).join(Cluster).where(Cluster.reporter.in_(reporter_resource_dict.keys()))
     opinions = []
-    breakpoint()
-    for opinon in session.execute(stmt).iterator:
+    for opinion in session.execute(stmt).iterator:
         parentheticals = []
         contexts = []
         for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
             if isinstance(citation, CaseCitation):
                 if citation.metadata.parenthetical is not None:
-                    opinion.parentheticals.append(OpinionParenthetical(citing_opinion_id=opinion_id,
-                                                                       cited_opinion_id=citation.metadata.resource_id,
+                    opinion.opinion_parentheticals.append(OpinionParenthetical(citing_opinion_id=opinion_id,
+                                                                       cited_opinion_id=opinion.resource_id,
                                                                        text=citation.metadata.parenthetical))
                 start = max(0, citation.index + context_slice.start)
-                stop = min(len(self.tokenizer.words), citation.index + context_slice.stop)
+                stop = min(len(tokenizer.words), citation.index + context_slice.stop)
                 # contexts.append(list(self.clean_contexts(self.tokenizer.words[start:stop])))
-                opinion.contexts.append(OpinionContext(citing_opinion_id=opinion_id,
-                                                       cited_opinion_id=citation.metadata.resource_id,
-                                                       text=" ".join(self.tokenizer.words[start:stop])))
+                opinion.citation_contexts.append(CitationContext(citing_opinion_id=opinion_id,
+                                                       cited_opinion_id=opinion.resource_id,
+                                                       text=" ".join([str(s) for s in tokenizer.words[start:stop]])))
         opinions.append(opinion)
     return opinions
