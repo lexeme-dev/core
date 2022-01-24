@@ -1,5 +1,6 @@
 from typing import Iterable, List, cast
-from db.peewee.models import Opinion, Cluster
+from db.sqlalchemy.models import Opinion, Cluster
+from sqlalchemy import select
 from utils.format import format_reporter
 import eyecite
 from eyecite.models import (Resource as EyeciteResource, CitationBase, CaseCitation)
@@ -28,10 +29,11 @@ class OneTimeTokenizer(Tokenizer):
 class CitationExtractor:
     unstructured_text: str
 
-    def __init__(self, unstructured_text: str):
+    def __init__(self, unstructured_text: str, sqlalchemy_session=None):
         # Allows eyecite to detect reporter citations when a whitespace exists between the letters of the abbreviation
         cleaned_text = unstructured_text.replace("U. S. ", "U.S. ")
         self.unstructured_text = cleaned_text
+        self.sqlalchemy_session = sqlalchemy_session
 
     def get_citations(self) -> List[CitationBase]:
         self.tokenizer = OneTimeTokenizer()
@@ -49,7 +51,7 @@ class CitationExtractor:
                 continue
             yield c
 
-    def get_extracted_citations(self, context_slice: slice=slice(-64, 64)) -> List[Opinion]:
+    def get_extracted_citations(self, context_slice: slice=slice(-128, 128)) -> List[Opinion]:
         cited_resources = eyecite.resolve_citations(self.get_citations())
         reporter_resource_dict = {format_reporter(res.citation.groups.get('volume'), res.citation.groups.get('reporter'), res.citation.groups.get('page')): res
                                   for res in cited_resources}
@@ -65,8 +67,8 @@ class CitationExtractor:
                     start = max(0, citation.index + context_slice.start)
                     stop = min(len(self.tokenizer.words), citation.index + context_slice.stop)
                     contexts.append(list(self.clean_contexts(self.tokenizer.words[start:stop])))
-            opinion.ingest_parentheticals(parentheticals)
-            opinion.ingest_contexts(contexts)
+            opinion.parentheticals.append(parentheticals)
+            opinion.contexts(contexts)
             extracted_citations.append(opinion)
         return extracted_citations
 
@@ -85,5 +87,5 @@ class CitationExtractor:
         reporters_of_cited_cases = {format_reporter(volume=res.citation.groups.get('volume'), reporter=res.citation.groups.get('reporter'),
                                                     page=res.citation.groups.get('page')): i for i, res in
                                     enumerate(unique_resources)}
-        return sorted(Opinion.select().join(Cluster).where(Cluster.reporter << list(reporters_of_cited_cases.keys())),
-                      key=lambda op: reporters_of_cited_cases[op.cluster.reporter])
+        stmt = select(Opinion).join(Cluster).where(Cluster.reporter.in_(reporters_of_cited_cases.keys()))
+        return sorted(self.sqlalchemy_session.execute(stmt).iterator, key=lambda op: reporters_of_cited_cases[op.cluster.reporter])

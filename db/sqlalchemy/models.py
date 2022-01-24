@@ -82,6 +82,7 @@ class Cluster(Base):
     searchable_case_name = Column(TSVECTOR)
     court = Column(Text, index=True)
     courtlistener_json_checksum = Column(String(32))
+    opinion = relationship("Opinion", back_populates="cluster")
 
     __table_args__ = (
         Index('searchable_case_name_idx', 'searchable_case_name', postgresql_using='gin', unique=False),
@@ -105,7 +106,7 @@ class Opinion(Base):
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
     cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'))
-    cluster = relationship("Cluster", lazy='joined')
+    cluster = relationship("Cluster", back_populates="opinion")
     html_text = deferred(Column(Text))
     courtlistener_json_checksum = Column(String(32))
 
