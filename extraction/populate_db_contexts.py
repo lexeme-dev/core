@@ -31,6 +31,8 @@ class OneTimeTokenizer(Tokenizer):
 
 def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128,128)):
     unstructured_html = session.query(Opinion).filter(Opinion.resource_id==opinion_id).first().html_text
+    if not unstructured_html:
+        raise ValueError(f"No HTML for case {opinion_id}")
     unstructured_text = BeautifulSoup(unstructured_html, features="lxml").text
     clean_text = unstructured_text.replace("U. S.", "U.S.")
     tokenizer = OneTimeTokenizer()
@@ -61,7 +63,11 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128,128)
 def populate_all_db_contexts():
     from db.sqlalchemy.helpers import get_session
     s = get_session()
-    for op in sm.execute(select(Opinion)).iterator:
-        populate_db_contexts(s, op.resource_id)
+    for i, op in enumerate(s.execute(select(Opinion)).iterator):
+        try:
+            populate_db_contexts(s, op.resource_id)
+        except Exception as e:
+            print(f"Failed {op.resource_id} with {e}!")
+            continue
+        print(f"Completed {op.resource_id}")
         s.commit()
-        print(f"Completed {op.resource_id}!")
