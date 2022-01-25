@@ -1,3 +1,5 @@
+import re
+
 from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext
 from bs4 import BeautifulSoup
 from sqlalchemy import select
@@ -23,6 +25,8 @@ STOP_WORDS = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're", "you've", 'your',
               'yours', 'yourself', 'yourselves', ' ', 'court', "court's"}
 LETTERS = set(ascii_lowercase)
+PARENTHETICAL_BLACKLIST_REGEX = re.compile(
+    r"^\s*(?:(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)?)?)?) opinion)|(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result))?)?)?)? ?opinion of \S+ (?:J.|C.\s*J.))|(?:(?:quoting|citing).*)|(?:per curiam)|(?:(?:plurality|majority|dissenting|concurring)(?: (?:opinion|statement))?)|(?:\S+,\s*(?:J.|C.\s*J.(?:, joined by .*,)?)(?:, (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result|(?:from|with|respecting) ?denial of certiorari)?)?(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in(?: the)? judgment|in judgment in part|in result|(?:from|with|respecting) denial of certiorari))?)?)?))?)|(?:(?:some )?(?:internal )?(?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis)(?: and (?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis))? (?:added|omitted|deleted|in original|altered|modified))|(?:same|similar)|(?:slip op.* \d*)|denying certiorari|\w+(?: I{1,3})?|opinion in chambers|opinion of .*)\s*$")
 
 
 class OneTimeTokenizer(Tokenizer):
@@ -58,7 +62,7 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128, 128
     for opinion in session.execute(stmt).iterator:
         for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
             if isinstance(citation, CaseCitation):
-                if citation.metadata.parenthetical is not None:
+                if citation.metadata.parenthetical is not None and not re.match(citation.metadata.parenthetical):
                     opinion.opinion_parentheticals.append(OpinionParenthetical(citing_opinion_id=opinion_id,
                                                                                cited_opinion_id=opinion.resource_id,
                                                                                text=citation.metadata.parenthetical))
@@ -84,3 +88,7 @@ def populate_all_db_contexts():
             continue
         print(f"Completed {op.resource_id}")
         s.commit()
+
+
+if __name__ == '__main__':
+    populate_all_db_contexts()
