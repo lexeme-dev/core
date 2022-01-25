@@ -103,6 +103,13 @@ def get_reporter_resource_dict(s):
                 reporter_max_citation_count[reporter] = citation_count
     return reporter_resource_dict
 
+def batched_opinion_iterator(session, batch_size=1000):
+    pageno = 0
+    opinions = None
+    while opinions := session.query(Opinion).limit(batch_size).offset(pageno * batch_size).all():
+        for op in opinions:
+            yield op
+        pageno += 1
 
 def batched_opinion_iterator(session, jur: Court, batch_size=1000):
     pageno = 0
