@@ -6,9 +6,10 @@ from sqlalchemy import select
 from utils.format import format_reporter
 import eyecite
 from eyecite.models import CaseCitation
-from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer
+from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer, HyperscanTokenizer
 from string import ascii_lowercase
 
+from utils.io import get_full_path
 from utils.logger import Logger
 
 STOP_WORDS = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -30,6 +31,8 @@ LETTERS = set(ascii_lowercase)
 PARENTHETICAL_BLACKLIST_REGEX = re.compile(
     r"^\s*(?:(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)?)?)?) opinion)|(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result))?)?)?)? ?opinion of \S+ (?:J.|C.\s*J.))|(?:(?:quoting|citing).*)|(?:per curiam)|(?:(?:plurality|majority|dissenting|concurring)(?: (?:opinion|statement))?)|(?:\S+,\s*(?:J.|C.\s*J.(?:, joined by .*,)?)(?:, (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result|(?:from|with|respecting) ?denial of certiorari)?)?(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in(?: the)? judgment|in judgment in part|in result|(?:from|with|respecting) denial of certiorari))?)?)?))?)|(?:(?:some )?(?:internal )?(?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis)(?: and (?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis))? (?:added|omitted|deleted|in original|altered|modified))|(?:same|similar)|(?:slip op.* \d*)|denying certiorari|\w+(?: I{1,3})?|opinion in chambers|opinion of .*)\s*$")
 
+eyecite_tokenizer: Tokenizer
+
 
 class OneTimeTokenizer(Tokenizer):
     """
@@ -43,7 +46,7 @@ class OneTimeTokenizer(Tokenizer):
     def tokenize(self, text: str):
         if not self.words or self.cit_toks:
             # some of the static methods in AhocorasickTokenizer don't like children.
-            self.words, self.cit_toks = AhocorasickTokenizer().tokenize(text)
+            self.words, self.cit_toks = eyecite_tokenizer.tokenize(text)
         return self.words, self.cit_toks
 
 
@@ -93,6 +96,7 @@ def get_reporter_resource_dict(s):
                 reporter_max_citation_count[reporter] = citation_count
     return reporter_resource_dict
 
+
 def batched_opinion_iterator(session, batch_size=1000):
     pageno = 0
     opinions = None
@@ -101,13 +105,21 @@ def batched_opinion_iterator(session, batch_size=1000):
             yield op
         pageno += 1
 
+
 def populate_all_db_contexts():
     from db.sqlalchemy.helpers import get_session
     s = get_session()
+    global eyecite_tokenizer
+    try:
+        Logger.info("Initializing Hyperscan tokenizer...")
+        eyecite_tokenizer = HyperscanTokenizer(cache_dir=get_full_path('tmp/.hyperscan'))
+    except:
+        Logger.info("Failed to initialize hyperscan, using Ahocorasick...")
+        eyecite_tokenizer = AhocorasickTokenizer()    
     Logger.info("Constructing reporter to resource_id dict...")
     reporter_resource_dict = get_reporter_resource_dict(s)
     Logger.info("Completed construction of reporter to resource_id dict...")
-    for i, op in enumerate(s.execute(select(Opinion)).iterator):
+    for i, op in enumerate(batched_opinion_iterator(s)):
         try:
             populate_db_contexts(s, op, reporter_resource_dict)
         except Exception as e:
@@ -115,6 +127,7 @@ def populate_all_db_contexts():
             continue
         if i > 0 and i % 1000 == 0:
             s.commit()
+            break
             if i % 10_000 == 0:
                 Logger.info(f"Completed {i} opinions...")
     s.commit()
