@@ -1,8 +1,6 @@
 import re
-from multiprocessing import Pool
-
+from collections import defaultdict
 from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext, Court
-from ingress.helpers import JURISDICTIONS
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 from utils.format import format_reporter
@@ -85,9 +83,10 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128, 128
 def populate_all_db_contexts():
     from db.sqlalchemy.helpers import get_session
     s = get_session()
+    reporter_resource_dict = get_reporter_resource_dict(s)
     for i, op in enumerate(s.execute(select(Opinion)).iterator):
         try:
-            populate_db_contexts(s, op.resource_id)
+            populate_db_contexts(s, op.resource_id, reporter_resource_dict)
         except Exception as e:
             Logger.error(f"Failed {op.resource_id} with {e}!")
             continue
@@ -95,6 +94,21 @@ def populate_all_db_contexts():
         if i > 0 and i % 1000 == 0:
             s.commit()
     s.commit()
+
+
+def get_reporter_resource_dict(s):
+    reporter_resource_dict = {}
+    reporter_max_citation_count = defaultdict(lambda: -1)
+    for reporter, resource_id, citation_count in s.execute(
+            select(Cluster.reporter, Opinion.resource_id, Cluster.citation_count).join(Cluster)).iterator:
+        if reporter not in reporter_resource_dict:
+            reporter_resource_dict[reporter] = resource_id
+            reporter_max_citation_count[reporter] = citation_count
+        else:
+            if citation_count > reporter_max_citation_count[reporter]:
+                reporter_resource_dict[reporter] = resource_id
+                reporter_max_citation_count[reporter] = citation_count
+    return reporter_resource_dict
 
 
 if __name__ == '__main__':
