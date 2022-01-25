@@ -1,8 +1,14 @@
 import re
 from collections import defaultdict
+from multiprocessing import Pool
+
+from sqlalchemy.orm import Session
+
 from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext, Court
+from db.sqlalchemy.helpers import get_session, ENGINE, get_db_url
+from ingress.helpers import JURISDICTIONS
 from bs4 import BeautifulSoup
-from sqlalchemy import select
+from sqlalchemy import select, create_engine
 from utils.format import format_reporter
 import eyecite
 from eyecite.models import CaseCitation
@@ -32,6 +38,7 @@ PARENTHETICAL_BLACKLIST_REGEX = re.compile(
     r"^\s*(?:(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)?)?)?) opinion)|(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result))?)?)?)? ?opinion of \S+ (?:J.|C.\s*J.))|(?:(?:quoting|citing).*)|(?:per curiam)|(?:(?:plurality|majority|dissenting|concurring)(?: (?:opinion|statement))?)|(?:\S+,\s*(?:J.|C.\s*J.(?:, joined by .*,)?)(?:, (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result|(?:from|with|respecting) ?denial of certiorari)?)?(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in(?: the)? judgment|in judgment in part|in result|(?:from|with|respecting) denial of certiorari))?)?)?))?)|(?:(?:some )?(?:internal )?(?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis)(?: and (?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis))? (?:added|omitted|deleted|in original|altered|modified))|(?:same|similar)|(?:slip op.* \d*)|denying certiorari|\w+(?: I{1,3})?|opinion in chambers|opinion of .*)\s*$")
 
 eyecite_tokenizer: Tokenizer
+reporter_resource_dict: dict
 
 
 class OneTimeTokenizer(Tokenizer):
@@ -97,29 +104,20 @@ def get_reporter_resource_dict(s):
     return reporter_resource_dict
 
 
-def batched_opinion_iterator(session, batch_size=1000):
+def batched_opinion_iterator(session, jur: Court, batch_size=1000):
     pageno = 0
     opinions = None
-    while opinions := session.query(Opinion).limit(batch_size).offset(pageno * batch_size).all():
+    while opinions := session.execute(
+            select(Opinion).join(Cluster).filter(Cluster.court == jur).limit(batch_size).offset(
+                    pageno * batch_size)).scalars().all():
         for op in opinions:
             yield op
         pageno += 1
 
 
-def populate_all_db_contexts():
-    from db.sqlalchemy.helpers import get_session
-    s = get_session()
-    global eyecite_tokenizer
-    try:
-        Logger.info("Initializing Hyperscan tokenizer...")
-        eyecite_tokenizer = HyperscanTokenizer(cache_dir=get_full_path('tmp/.hyperscan'))
-    except:
-        Logger.info("Failed to initialize hyperscan, using Ahocorasick...")
-        eyecite_tokenizer = AhocorasickTokenizer()    
-    Logger.info("Constructing reporter to resource_id dict...")
-    reporter_resource_dict = get_reporter_resource_dict(s)
-    Logger.info("Completed construction of reporter to resource_id dict...")
-    for i, op in enumerate(batched_opinion_iterator(s)):
+def populate_jurisdiction_db_context(jur: Court):
+    s = Session(create_engine(get_db_url()))
+    for i, op in enumerate(batched_opinion_iterator(s, jur)):
         try:
             populate_db_contexts(s, op, reporter_resource_dict)
         except Exception as e:
@@ -127,11 +125,21 @@ def populate_all_db_contexts():
             continue
         if i > 0 and i % 1000 == 0:
             s.commit()
-            break
             if i % 10_000 == 0:
-                Logger.info(f"Completed {i} opinions...")
+                Logger.info(f"Completed {i} opinions for jurisdiction {jur}...")
     s.commit()
 
 
 if __name__ == '__main__':
-    populate_all_db_contexts()
+    Logger.info("Constructing reporter to resource_id dict...")
+    with get_session() as s:
+        reporter_resource_dict = get_reporter_resource_dict(s)
+    Logger.info("Completed construction of reporter to resource_id dict...")
+    try:
+        Logger.info("Initializing Hyperscan tokenizer...")
+        eyecite_tokenizer = HyperscanTokenizer(cache_dir=get_full_path('tmp/.hyperscan'))
+    except:
+        Logger.info("Failed to initialize hyperscan, using Ahocorasick...")
+        eyecite_tokenizer = AhocorasickTokenizer()
+    with Pool(6) as p:
+        p.map(populate_jurisdiction_db_context, JURISDICTIONS)
