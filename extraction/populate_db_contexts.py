@@ -9,6 +9,8 @@ from eyecite.models import CaseCitation
 from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer
 from string import ascii_lowercase
 
+from utils.logger import Logger
+
 STOP_WORDS = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
               'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by', "can't",
               'cannot', 'could', "couldn't", 'did', "didn't", 'do', 'does', "doesn't", 'doing', "don't", 'down',
@@ -62,7 +64,8 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128, 128
     for opinion in session.execute(stmt).iterator:
         for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
             if isinstance(citation, CaseCitation):
-                if citation.metadata.parenthetical is not None and not re.match(citation.metadata.parenthetical):
+                if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
+                        citation.metadata.parenthetical):
                     opinion.opinion_parentheticals.append(OpinionParenthetical(citing_opinion_id=opinion_id,
                                                                                cited_opinion_id=opinion.resource_id,
                                                                                text=citation.metadata.parenthetical))
@@ -71,7 +74,7 @@ def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128, 128
                 # contexts.append(list(self.clean_contexts(self.tokenizer.words[start:stop])))
                 opinion.citation_contexts.append(CitationContext(citing_opinion_id=opinion_id,
                                                                  cited_opinion_id=opinion.resource_id,
-                                                                 text=" ".join(
+                                                                 text="".join(
                                                                      [str(s) for s in tokenizer.words[start:stop]])))
         opinions.append(opinion)
     return opinions
@@ -84,9 +87,9 @@ def populate_all_db_contexts():
         try:
             populate_db_contexts(s, op.resource_id)
         except Exception as e:
-            print(f"Failed {op.resource_id} with {e}!")
+            Logger.error(f"Failed {op.resource_id} with {e}!")
             continue
-        print(f"Completed {op.resource_id}")
+        Logger.info(f"Completed {op.resource_id}")
         s.commit()
 
 
