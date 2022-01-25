@@ -47,37 +47,35 @@ class OneTimeTokenizer(Tokenizer):
         return self.words, self.cit_toks
 
 
-def populate_db_contexts(session, opinion_id: int, context_slice=slice(-128, 128)):
-    unstructured_html = session.query(Opinion).filter(Opinion.resource_id == opinion_id).first().html_text
+def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dict, context_slice=slice(-128, 128)) => None:
+    unstructured_html = opinion.html_text
     if not unstructured_html:
-        raise ValueError(f"No HTML for case {opinion_id}")
+        raise ValueError(f"No HTML for case {opinion.resource_id}")
     unstructured_text = BeautifulSoup(unstructured_html, features="lxml").text
     clean_text = unstructured_text.replace("U. S.", "U.S.")
     tokenizer = OneTimeTokenizer()
     citations = list(eyecite.get_citations(clean_text, tokenizer=tokenizer))
     cited_resources = eyecite.resolve_citations(citations)
-    reporter_resource_dict = {format_reporter(res.citation.groups.get('volume'), res.citation.groups.get('reporter'),
-                                              res.citation.groups.get('page')): res
+    reporter_resource_dict = {: res
                               for res in cited_resources}
-    stmt = select(Opinion).join(Cluster).where(Cluster.reporter.in_(reporter_resource_dict.keys()))
-    opinions = []
-    for opinion in session.execute(stmt).iterator:
-        for citation in cited_resources[reporter_resource_dict[opinion.cluster.reporter]]:
-            if isinstance(citation, CaseCitation):
-                if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
-                        citation.metadata.parenthetical):
-                    opinion.opinion_parentheticals.append(OpinionParenthetical(citing_opinion_id=opinion_id,
-                                                                               cited_opinion_id=opinion.resource_id,
-                                                                               text=citation.metadata.parenthetical))
-                start = max(0, citation.index + context_slice.start)
-                stop = min(len(tokenizer.words), citation.index + context_slice.stop)
-                # contexts.append(list(self.clean_contexts(self.tokenizer.words[start:stop])))
-                opinion.citation_contexts.append(CitationContext(citing_opinion_id=opinion_id,
-                                                                 cited_opinion_id=opinion.resource_id,
-                                                                 text="".join(
-                                                                     [str(s) for s in tokenizer.words[start:stop]])))
-        opinions.append(opinion)
-    return opinions
+    for resource, citation_list in cited_resources:
+        for citation in citation_list:
+            if not isinstance(citation, CaseCitation):
+                continue
+            cited_opinion_res_id = reporter_to_resource_id[
+                format_reporter(res.citation.groups.get('volume'),
+                                res.citation.groups.get('reporter'),
+                                res.citation.groups.get('page'))]
+            if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
+                    citation.metadata.parenthetical):
+                session.add(OpinionParenthetical(citing_opinion_id=opinion.resource_id,
+                            cited_opinion_id=cited_opinion_res_id,
+                            text=citation.metadata.parenthetical))
+            start = max(0, citation.index + context_slice.start)
+            stop = min(len(tokenizer.words), citation.index + context_slice.stop)
+            session.add(CitationContext(citing_opinion_id=opinion.resource_id,
+                                        cited_opinion_id=cited_opinion_res_id,
+                                        text="".join([s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
 
 
 def populate_all_db_contexts():
