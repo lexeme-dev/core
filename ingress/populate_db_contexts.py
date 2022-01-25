@@ -1,6 +1,8 @@
 import re
+from multiprocessing import Pool
 
-from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext
+from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext, Court
+from ingress.helpers import JURISDICTIONS
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 from utils.format import format_reporter
@@ -90,7 +92,9 @@ def populate_all_db_contexts():
             Logger.error(f"Failed {op.resource_id} with {e}!")
             continue
         Logger.info(f"Completed {op.resource_id}")
-        s.commit()
+        if i > 0 and i % 1000 == 0:
+            s.commit()
+    s.commit()
 
 
 if __name__ == '__main__':
