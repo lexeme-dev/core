@@ -47,7 +47,8 @@ class OneTimeTokenizer(Tokenizer):
         return self.words, self.cit_toks
 
 
-def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dict, context_slice=slice(-128, 128)) -> None:
+def populate_db_contexts(session, opinion: Opinion, reporter_resource_dict: dict,
+                         context_slice=slice(-128, 128)) -> None:
     unstructured_html = opinion.html_text
     if not unstructured_html:
         raise ValueError(f"No HTML for case {opinion.resource_id}")
@@ -56,40 +57,26 @@ def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dic
     tokenizer = OneTimeTokenizer()
     citations = list(eyecite.get_citations(clean_text, tokenizer=tokenizer))
     cited_resources = eyecite.resolve_citations(citations)
-    for resource, citation_list in cited_resources:
-        cited_opinion_res_id = reporter_to_resource_id[
+    for resource, citation_list in cited_resources.items():
+        cited_opinion_res_id = reporter_resource_dict.get(
             format_reporter(resource.citation.groups.get('volume'),
                             resource.citation.groups.get('reporter'),
-                            resource.citation.groups.get('page'))]
+                            resource.citation.groups.get('page')))
+        if cited_opinion_res_id is None:
+            continue
         for citation in citation_list:
             if not isinstance(citation, CaseCitation):
                 continue
             if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
                     citation.metadata.parenthetical):
                 session.add(OpinionParenthetical(citing_opinion_id=opinion.resource_id,
-                            cited_opinion_id=cited_opinion_res_id,
-                            text=citation.metadata.parenthetical))
+                                                 cited_opinion_id=cited_opinion_res_id,
+                                                 text=citation.metadata.parenthetical))
             start = max(0, citation.index + context_slice.start)
             stop = min(len(tokenizer.words), citation.index + context_slice.stop)
             session.add(CitationContext(citing_opinion_id=opinion.resource_id,
                                         cited_opinion_id=cited_opinion_res_id,
-                                        text="".join([s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
-
-
-def populate_all_db_contexts():
-    from db.sqlalchemy.helpers import get_session
-    s = get_session()
-    reporter_resource_dict = get_reporter_resource_dict(s)
-    for i, op in enumerate(s.execute(select(Opinion)).iterator):
-        try:
-            populate_db_contexts(s, op.resource_id, reporter_resource_dict)
-        except Exception as e:
-            Logger.error(f"Failed {op.resource_id} with {e}!")
-            continue
-        Logger.info(f"Completed {op.resource_id}")
-        if i > 0 and i % 1000 == 0:
-            s.commit()
-    s.commit()
+                                        text=" ".join([s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
 
 
 def get_reporter_resource_dict(s):
@@ -105,6 +92,25 @@ def get_reporter_resource_dict(s):
                 reporter_resource_dict[reporter] = resource_id
                 reporter_max_citation_count[reporter] = citation_count
     return reporter_resource_dict
+
+
+def populate_all_db_contexts():
+    from db.sqlalchemy.helpers import get_session
+    s = get_session()
+    Logger.info("Constructing reporter to resource_id dict...")
+    reporter_resource_dict = get_reporter_resource_dict(s)
+    Logger.info("Completed construction of reporter to resource_id dict...")
+    for i, op in enumerate(s.execute(select(Opinion)).iterator):
+        try:
+            populate_db_contexts(s, op, reporter_resource_dict)
+        except Exception as e:
+            Logger.error(f"Failed {op.resource_id} with {e}!")
+            continue
+        if i > 0 and i % 1000 == 0:
+            s.commit()
+            if i % 10_000 == 0:
+                Logger.info(f"Completed {i} opinions...")
+    s.commit()
 
 
 if __name__ == '__main__':
