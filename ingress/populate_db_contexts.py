@@ -58,7 +58,7 @@ def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dic
     tokenizer = OneTimeTokenizer()
     citations = list(eyecite.get_citations(clean_text, tokenizer=tokenizer))
     cited_resources = eyecite.resolve_citations(citations)
-    for resource, citation_list in cited_resources:
+    for resource, citation_list in cited_resources.items():
         cited_opinion_res_id = reporter_to_resource_id[
             format_reporter(resource.citation.groups.get('volume'),
                             resource.citation.groups.get('reporter'),
@@ -77,6 +77,13 @@ def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dic
                                         cited_opinion_id=cited_opinion_res_id,
                                         text="".join([s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
 
+def batched_opinion_iterator(session, batch_size=1000):
+    pageno = 0
+    opinions = None
+    while opinions := session.query(Opinion).limit(batch_size).offset(pageno * batch_size).all():
+        for op in opinions:
+            yield op
+        pageno += 1
 
 def populate_all_db_contexts():
     from db.sqlalchemy.helpers import get_session
