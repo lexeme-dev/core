@@ -47,7 +47,7 @@ class OneTimeTokenizer(Tokenizer):
         return self.words, self.cit_toks
 
 
-def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dict, context_slice=slice(-128, 128)) => None:
+def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dict, context_slice=slice(-128, 128)) -> None:
     unstructured_html = opinion.html_text
     if not unstructured_html:
         raise ValueError(f"No HTML for case {opinion.resource_id}")
@@ -56,16 +56,14 @@ def populate_db_contexts(session, opinion: Opinion, reporter_to_resource_id: dic
     tokenizer = OneTimeTokenizer()
     citations = list(eyecite.get_citations(clean_text, tokenizer=tokenizer))
     cited_resources = eyecite.resolve_citations(citations)
-    reporter_resource_dict = {: res
-                              for res in cited_resources}
     for resource, citation_list in cited_resources:
+        cited_opinion_res_id = reporter_to_resource_id[
+            format_reporter(resource.citation.groups.get('volume'),
+                            resource.citation.groups.get('reporter'),
+                            resource.citation.groups.get('page'))]
         for citation in citation_list:
             if not isinstance(citation, CaseCitation):
                 continue
-            cited_opinion_res_id = reporter_to_resource_id[
-                format_reporter(res.citation.groups.get('volume'),
-                                res.citation.groups.get('reporter'),
-                                res.citation.groups.get('page'))]
             if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
                     citation.metadata.parenthetical):
                 session.add(OpinionParenthetical(citing_opinion_id=opinion.resource_id,
