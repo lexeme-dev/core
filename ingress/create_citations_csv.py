@@ -1,6 +1,6 @@
 from db.sqlalchemy import *
 from db.sqlalchemy.models import Citation
-from ingress.helpers import get_full_path
+from utils.io import get_full_path
 import csv
 
 CITATION_CSV_PATH = 'data/citation_list.csv'
