@@ -14,7 +14,7 @@ See [Eksombatchai et. al (2017)](https://arxiv.org/abs/1711.07601), [Huang et. a
 
 Our current work is focused on the federal appellate corpus (all circuit courts as well as the Supreme Court), with the aim of building systems that generalize to other jurisdictions.
 
-This repository contains the bulk of the logic and infrastructure powering this project, as well as command-line and REST interfaces. See [scotus-explorer](https://github.com/lexcaliber/scotus-explorer) for more information about the prototype web interface we're building to demonstrate the technology.
+This repository contains the bulk of the logic and infrastructure powering this project, as well as command-line and REST interfaces. See [lexcaliber/explorer](https://github.com/lexcaliber/explorer) for more information about the prototype web interface we're building to demonstrate the technology.
 
 
 ## Getting set up
