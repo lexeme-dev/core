@@ -7,6 +7,7 @@ Our current efforts include:
   - Building a search function for caselaw that marshals both textual content of the user's query and previously-identified relevant cases to display the most relevant results to the user.
 - Scraping and analyzing [parentheticals](https://www.law.georgetown.edu/wp-content/uploads/2018/07/Parentheticals-Bluebook-Handout-Revision-Karl-Bock-2016.pdf) of legal citations to infer semantic content and relevance of cases to one other.
 - Utilizing [graph embedding](https://en.wikipedia.org/wiki/Knowledge_graph_embedding) techniques to efficiently deliver recommendations and create intuitive visualizations.
+- Clustering caselaw using network- and text-based approaches to understand the discrete issues presented by different parts of a given legal document.
 - Empirically determining the degree of reliance on precedent  courts demonstrate in different jurisdictions and areas of the law by estimating the "predictability" of citation behavior.
 - Designing a web interface that can be used by legal researchers to quickly discover and identify relevant caselaw using our systems.
 
@@ -56,12 +57,9 @@ Majority vote control for 20 cases after 5  trials each:
         top20: 0.0%
 ```
 
-The headline number means that, 10 percent of the time, we are able to immediately respond with the omitted cases.
-These results are comparable with those of Huang et. al.
-Although their numbers are much higher, they apply and measure their method against a much smaller corpus with just 4,000 cited cases, in comparison to the ~1,000,000 federal opinions we are working with.
-In their simpler corpus, a majority vote control with no intelligent software at all performs nearly as well as our algorithm, whereas our majority vote control almost always sits at zero.
-
-The initial results of the algorithm are promising, and it has much room for improvement as well.
+These results are comparable to Huang et. al. 2021 in light of the much larger federal appellate corpus and, in our view,
+portend significantly more potential to generalize to other jurisdictions. We further expect these results to improve once
+we consider textual citation context as part of our recommendation computation.
 
 ## Getting set up
 
