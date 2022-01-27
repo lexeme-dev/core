@@ -1,16 +1,17 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 
-from algorithms import CaseSearch
+from algorithms.case_recall import CaseRecall
+from graph import CitationNetwork
+from algorithms import CaseSearch, CaseRecommendation
 from api import app
 from db.sqlalchemy import get_session, select
-from db.sqlalchemy.models import Opinion
+from db.sqlalchemy.models import Opinion, Court
 from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
 from ingress.helpers import JURISDICTIONS
 from utils.format import pretty_print_opinion
-from typing import List
 
 
 @click.group()
@@ -78,6 +79,7 @@ def case_lookup(resource_id: int):
             raise ValueError(f"Resource id {resource_id} not located in current db.")
         click.echo(pretty_print_opinion(op))
 
+
 @case.command(name='search', help='Search cases by name')
 @click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of case results')
 @click.argument('query', type=str)
@@ -88,14 +90,13 @@ def case_search(query: str, num_cases: int):
         output += f"{pretty_print_opinion(op)}\n\n"
     click.echo(output.strip())
 
+
 @case.command(name='recommend', help='Produce recommendations for a set of bookmarked cases.')
 @click.argument("bookmarks", nargs=-1, type=int)
 @click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of recommmendation results')
-@click.option('-c', '--court', multiple=True, default=[], help='Filter to a specific court id (can be provided multiple times)')
-def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
-    from algorithms import CaseRecommendation
-    from extraction.citation_extractor import CitationExtractor
-    from graph import CitationNetwork
+@click.option('-c', '--court', multiple=True, default=[],
+              help='Filter to a specific court id (can be provided multiple times)')
+def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[Court]):
     from db.peewee.models import Opinion, Cluster
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     recommendation = CaseRecommendation(citation_network)
@@ -108,3 +109,30 @@ def case_recommend(bookmarks: List[int], num_cases: int, court: List[str]):
         )
         for op in ro:
             click.echo(pretty_print_opinion(op))
+
+
+@cli.group(help='Utilities to measure algorithm performance')
+def stats():
+    pass
+
+
+@stats.command(name='recall', help='Measure quality of recommendations for a given case.')
+@click.argument('cases', nargs=-1, type=int)
+@click.option('-c', '--court', multiple=True, default=[],
+              help='Filter topN results to a specific court id (can be provided multiple times)')
+@click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
+def cli_case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt: bool):
+    citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+    # TODO: Use what is returned to make output rather than printing inside of CaseRecall
+    case_recall = CaseRecall(citation_network).case_recall(cases, court, numtrials, samecourt)
+
+
+@stats.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
+@click.option('-c', '--num-cases', default=20, help='Number of cases to test recall for.')
+@click.option('-t', '--num-trials', default=5, help='Number of trials to do for a court.')
+@click.option('--same-court/--no-same-court', default=True, help='whether to look for topN only in same court')
+def cli_case_recall(num_cases: int, num_trials: int, same_court: bool):
+    citation_network = CitationNetwork.get_citation_network(enable_caching=True)
+    # TODO: Use what is returned to make output rather than printing inside of CaseRecall
+    case_recall = CaseRecall(citation_network).case_recall(num_cases, (), num_trials, same_court)
