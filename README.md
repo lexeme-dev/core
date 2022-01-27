@@ -16,6 +16,52 @@ Our current work is focused on the federal appellate corpus (all circuit courts 
 
 This repository contains the bulk of the logic and infrastructure powering this project, as well as command-line and REST interfaces. See [lexcaliber/explorer](https://github.com/lexcaliber/explorer) for more information about the prototype web interface we're building to demonstrate the technology.
 
+## Results
+
+The main thrust of our efforts so far has been in recommendation and discovery.
+Given some information (a relevant case or two; key words or phrases; a document in progress) from the user, we would like to examine the ~1,000,000 document strong federal appellate corpus and recommend relevant opinions which aid the user’s research or argument.
+
+### Methodology
+
+Our initial results have been very promising.
+The primary metric we are currently using is _recall_, the percentage of documents defined as relevant that we are successfully able to recommend.
+We adopt the measurement approach taken by [Huang et. al (2021)](https://arxiv.org/abs/2106.10776).
+
+1. We select a random opinion in the federal corpus and remove it from our network (as if the opinion never existed).
+2. We input all but one of the opinion’s neighbors into the recommendation software.
+3. We measure whether the omitted neighbor was the top recommendation, in the top 5 recommendations, or in the top 20 recommendations.
+
+Our initial results are as follows: 
+
+```
+For 20 cases after 5  trials each:
+        top1: 10.0%
+        top5: 21.0%
+        top20: 35.0%
+Majority vote control for 20 cases after 5  trials each:
+        top1: 0.0%
+        top5: 0.0%
+        top20: 0.0%
+```
+
+If we restrict the cases to those with at least five neighbors (reasonable, considering that there are many orders/slip opinions with no or few citations), our results are even better:
+```
+For 20 cases after 5  trials each:
+        top1: 18.0%
+        top5: 30.0%
+        top20: 47.0%
+Majority vote control for 20 cases after 5  trials each:
+        top1: 0.0%
+        top5: 0.0%
+        top20: 0.0%
+```
+
+The headline number means that, 10 percent of the time, we are able to immediately respond with the omitted cases.
+These results are comparable with those of Huang et. al.
+Although their numbers are much higher, they apply and measure their method against a much smaller corpus with just 4,000 cited cases, in comparison to the ~1,000,000 federal opinions we are working with.
+In their simpler corpus, a majority vote control with no intelligent software at all performs nearly as well as our algorithm, whereas our majority vote control almost always sits at zero.
+
+The initial results of the algorithm are promising, and it has much room for improvement as well.
 
 ## Getting set up
 
