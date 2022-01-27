@@ -4,10 +4,9 @@ from graph import CitationNetwork
 from algorithms.random_walker import RandomWalker
 from algorithms.helpers import top_n
 from utils.logger import Logger
-# not sure if this is right
 from db.sqlalchemy.models import Court
 
-MAX_NUM_STEPS = 200000
+MAX_NUM_STEPS = 200_000
 MAX_WALK_LENGTH = 5
 
 VISITED_FREQ_THRESHOLD = 100
@@ -22,8 +21,9 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]=None,
-                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS, ignore_opinion_ids: frozenset=None) -> Dict[str, float]:
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
+                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
+                        ignore_opinion_ids: frozenset = None) -> Dict[str, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
@@ -43,15 +43,10 @@ class CaseRecommendation:
         if courts:
             overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items() \
                                       if self.citation_network.network_edge_list.node_metadata[k].court in courts}
-        for key, value in overall_node_freq_dict.items():
-            curr_node_metadata = self.citation_network.network_edge_list.node_metadata[key]
-            year_diff = abs(average_case_year - curr_node_metadata.year) if curr_node_metadata.year is not None else 0
-            # overall_node_freq_dict[key] = self.relevance_adjusted_score(value, num_neighbors=curr_node_metadata.length)
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
-        Logger.info(top_n_recommendations)
         return top_n_recommendations
 
-    def recommendations_for_case(self, opinion_id, num_recommendations, ignore_opinion_ids: frozenset= None,
+    def recommendations_for_case(self, opinion_id, num_recommendations, ignore_opinion_ids: frozenset = None,
                                  max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
         """
         Random-walk recommendation algorithm to return relevant cases given a case ID. Heavily based on
@@ -66,7 +61,8 @@ class CaseRecommendation:
         node_freq_dict = {}
         num_steps = 0
         while num_steps < max_num_steps:  # Keep a constant worst-case bound on execution time
-            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5, ignore_opinion_ids=ignore_opinion_ids)
+            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5,
+                                                                           ignore_opinion_ids=ignore_opinion_ids)
             if random_walk_dest == opinion_id:
                 continue
             if random_walk_dest not in node_freq_dict:
