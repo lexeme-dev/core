@@ -10,8 +10,10 @@ from db.sqlalchemy import get_session, select
 from db.sqlalchemy.models import Opinion, Court
 from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
+from ingress.embeddings import EmbeddingTrainer
 from ingress.helpers import JURISDICTIONS
 from utils.format import pretty_print_opinion
+from utils.io import EMBEDDING_GENSIM_MODEL_PATH, CITATION_LIST_CSV_PATH
 
 
 @click.group()
@@ -63,6 +65,20 @@ def data_update(jurisdictions: str, include_text_for: str, force_update: bool):
     click.echo(f"Including opinion text for jurisdictions: {include_text_for_arr}...")
     DbUpdater(jurisdictions=jurisdictions_arr, include_text_for=include_text_for_arr,
               force_update=force_update).update_from_cl_data()
+
+
+@cli.group(help='Commands relating to network embedding')
+def embeddings():
+    pass
+
+
+@embeddings.command(name='train', help='Train the Node2Vec embeddings (note: takes significant memory).')
+@click.option('--model-path', type=str, default=EMBEDDING_GENSIM_MODEL_PATH, show_default=True,
+              help='Path to save the node2vec model to.')
+@click.option('--csv-path', type=str, default=CITATION_LIST_CSV_PATH, show_default=True,
+              help='Path to find or create the citations CSV for training.')
+def embeddings_train(model_path: str, csv_path: str):
+    EmbeddingTrainer(model_path, csv_path).train()
 
 
 @cli.group(help='Utilities to search and look up cases')

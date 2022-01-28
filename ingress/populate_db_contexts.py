@@ -15,7 +15,7 @@ from eyecite.models import CaseCitation
 from eyecite.tokenizers import Tokenizer, AhocorasickTokenizer, HyperscanTokenizer
 from string import ascii_lowercase
 
-from utils.io import get_full_path
+from utils.io import get_full_path, HYPERSCAN_TMP_PATH
 from utils.logger import Logger
 
 STOP_WORDS = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     Logger.info("Completed construction of reporter to resource_id dict...")
     try:
         Logger.info("Initializing Hyperscan tokenizer...")
-        eyecite_tokenizer = HyperscanTokenizer(cache_dir=get_full_path('tmp/.hyperscan'))
+        eyecite_tokenizer = HyperscanTokenizer(cache_dir=HYPERSCAN_TMP_PATH)
     except:
         Logger.info("Failed to initialize hyperscan, using Ahocorasick...")
         eyecite_tokenizer = AhocorasickTokenizer()
