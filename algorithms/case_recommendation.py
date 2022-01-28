@@ -22,7 +22,7 @@ class CaseRecommendation:
         self.random_walker = RandomWalker(self.citation_network)
 
     def recommendations_n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]) \
-            -> Dict[str, float]:
+            -> Dict[int, float]:
         """
         Recommendations powered by Node2Vec network embeddings
         :param opinion_ids:
@@ -44,7 +44,7 @@ class CaseRecommendation:
 
     def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
-                        ignore_opinion_ids: frozenset = None) -> Dict[str, float]:
+                        ignore_opinion_ids: frozenset = None, before_year: int = None) -> Dict[int, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
@@ -59,11 +59,13 @@ class CaseRecommendation:
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
-        average_case_year = self.average_year_of_cases(opinion_ids)
         # want this to be done before filtering out years
         if courts:
             overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
                                       if self.citation_network.network_edge_list.node_metadata[k].court in courts}
+        if before_year:
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
+                                      if self.citation_network.network_edge_list.node_metadata[k].year <= before_year}
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
         return top_n_recommendations
 
@@ -92,7 +94,7 @@ class CaseRecommendation:
             num_steps += walk_length
         return top_n(node_freq_dict, num_recommendations)
 
-    def input_case_weights(self, opinion_ids) -> Dict[str, float]:
+    def input_case_weights(self, opinion_ids) -> Dict[int, float]:
         """
         Given a set of opinion IDs in a query, give the probability distribution with which to visit them based on
         their degree centralities.

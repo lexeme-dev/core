@@ -1,10 +1,12 @@
 import heapq
 from collections import OrderedDict
 from math import inf
-from typing import Dict
+from typing import Dict, TypeVar
+
+T = TypeVar('T')
 
 
-def top_n(value_dict: dict, n: int) -> Dict[str, float]:
+def top_n(value_dict: Dict[T, float], n: int) -> Dict[T, float]:
     """Helper function to find the n highest-value keys in a dictionary.
     Runs in O(n+k) time for a dictionary with k entries."""
     if n is None or n == inf:
