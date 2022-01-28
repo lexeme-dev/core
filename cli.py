@@ -13,7 +13,7 @@ from ingress.db_updater import DbUpdater
 from ingress.embeddings import EmbeddingTrainer
 from ingress.helpers import JURISDICTIONS
 from utils.format import pretty_print_opinion
-from utils.io import EMBEDDING_GENSIM_MODEL_PATH, CITATION_LIST_CSV_PATH
+from utils.io import N2V_MODEL_PATH, CITATION_LIST_CSV_PATH
 
 
 @click.group()
@@ -73,7 +73,7 @@ def embeddings():
 
 
 @embeddings.command(name='train', help='Train the Node2Vec embeddings (note: takes significant memory).')
-@click.option('--model-path', type=str, default=EMBEDDING_GENSIM_MODEL_PATH, show_default=True,
+@click.option('--model-path', type=str, default=N2V_MODEL_PATH, show_default=True,
               help='Path to save the node2vec model to.')
 @click.option('--csv-path', type=str, default=CITATION_LIST_CSV_PATH, show_default=True,
               help='Path to find or create the citations CSV for training.')
@@ -138,7 +138,7 @@ def stats():
               help='Filter topN results to a specific court id (can be provided multiple times)')
 @click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
 @click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
-def cli_case_recall(cases: Tuple[int], court: Tuple[str], numtrials: int, samecourt: bool):
+def cli_case_recall(cases: Tuple[int], court: Tuple[Court], numtrials: int, samecourt: bool):
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
     case_recall = CaseRecall(citation_network).case_recall(cases, court, numtrials, samecourt)

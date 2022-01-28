@@ -4,6 +4,7 @@ from numpy.random import choice
 from typing import Tuple, List
 
 from algorithms import CaseRecommendation
+from db.sqlalchemy.models import Court
 from graph import CitationNetwork
 
 
@@ -32,7 +33,7 @@ class CaseRecall:
         self.citation_network = citation_network
         self.recommendation = CaseRecommendation(self.citation_network)
 
-    def case_recall(self, cases: (Tuple[int], int), court: Tuple[str], num_trials: int, same_court: bool):
+    def case_recall(self, cases: (Tuple[int], int), court: Tuple[Court], num_trials: int, same_court: bool):
         if isinstance(cases, int):
             # cases will be selected in proportion to how often they're mentioned --- this seems good
             cases = choice(self.citation_network.network_edge_list.edge_list, size=cases)
@@ -54,12 +55,12 @@ class CaseRecall:
                     self.citation_network.network_edge_list.node_metadata[removed].court,) if same_court else ()
                 recommendations = list(
                     self.recommendation.recommendations(frozenset(neighbors), 20, courts=frozenset(court + same_court),
-                                                        ignore_opinion_ids=frozenset([c]), max_num_steps=1_000_000).keys())
+                                                        ignore_opinion_ids=frozenset([c]), max_num_steps=100_000).keys())
                 if removed in recommendations:
                     top20 += 1
                 if removed in recommendations[:5]:
                     top5 += 1
-                if removed == recommendations[0]:
+                if removed in recommendations[:1]:
                     top1 += 1
                 neighbors.append(removed)
             overall_top1 += top1

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from db.sqlalchemy import get_session
 from db.sqlalchemy.models import *
+from utils.logger import Logger
 
 
 class NodeMetadata(NamedTuple):
@@ -28,6 +29,7 @@ class NetworkEdgeList:
     session: Session | None
 
     def __init__(self, scotus_only):
+        Logger.info('Initializing network edge list...')
         self.scotus_only = scotus_only
         self.session = get_session()  # At some point we will get better session management, pinky promise.
         neighbor_dict = self.__get_neighbor_dict()
@@ -57,7 +59,7 @@ class NetworkEdgeList:
         opinion_year_dict = {op_id: year for op_id, year in
                              self.session.execute(opinion_year_query).all()}
         opinion_court_dict = {op_id: court for op_id, court in
-                             self.session.execute(opinion_court_query).all()}
+                              self.session.execute(opinion_court_query).all()}
         prev_index = 0
         for opinion_id, neighbors in neighbor_dict.items():
             start_idx = prev_index

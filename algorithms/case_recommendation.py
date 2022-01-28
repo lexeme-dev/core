@@ -21,6 +21,27 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
+    def recommendations_n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]) \
+            -> Dict[str, float]:
+        """
+        Recommendations powered by Node2Vec network embeddings
+        :param opinion_ids:
+        :param num_recommendations: The number of cases to return
+        :param courts: Which courts to return cases from
+        :return: A dictionary of the top num_recommendation opinion IDs and their relevance values
+        """
+        opinion_ids = list(map(str, opinion_ids))
+        # Hacky fix to ensure we have enough recommendations to filter out the non-matching courts
+        # Eventually we want to implement the KNN logic ourselves (it's fairly simple) so we don't have to do
+        # kludgey stuff like this.
+        gensim_topn = num_recommendations * 100
+        recs = [(int(resource_id), float(relevance)) for resource_id, relevance in
+                self.citation_network.n2v_model.most_similar(positive=opinion_ids, topn=gensim_topn)]
+        if courts:
+            recs = [(resource_id, relevance) for resource_id, relevance in recs if
+                    self.citation_network.network_edge_list.node_metadata[resource_id].court in courts]
+        return dict(recs[:num_recommendations])
+
     def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
                         ignore_opinion_ids: frozenset = None) -> Dict[str, float]:
@@ -41,7 +62,7 @@ class CaseRecommendation:
         average_case_year = self.average_year_of_cases(opinion_ids)
         # want this to be done before filtering out years
         if courts:
-            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items() \
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
                                       if self.citation_network.network_edge_list.node_metadata[k].court in courts}
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
         return top_n_recommendations
@@ -99,20 +120,6 @@ class CaseRecommendation:
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
         return (node_degree * (max_degree - log(node_degree))) / total_num_edges
-
-    def time_adjusted_score(self, unadjusted_score, year_distance) -> float:
-        pass
-
-    def obscurity_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        pass
-
-    def relevance_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
-        return unadjusted_score / log(floored_num_neighbors)
-
-    def landmark_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
-        return unadjusted_score * log(floored_num_neighbors)
 
     def average_year_of_cases(self, nodes: frozenset) -> float:
         sum_years, num_nodes = 0, 0
