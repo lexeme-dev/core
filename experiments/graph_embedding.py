@@ -1,8 +1,7 @@
-import networkx as nx
 from nodevectors import Node2Vec
 import csrgraph as cg
 
-from ingress.helpers import get_full_path
+from utils.io import get_full_path
 from ingress.create_citations_csv import CITATION_CSV_PATH, create_citations_csv
 import os
 
@@ -35,7 +34,7 @@ g2v.save(get_full_path('data/embeddings/node2vec'))
 # g2v = Node2Vec.load(get_full_path('data/embeddings/node2vec.zip'))
 
 # Save model to gensim.KeyedVector format
-g2v.save_vectors(get_full_path("data/embeddings/wheel_model.bin"))
+g2v.save_vectors(get_full_path("data/embeddings/node2vec_model.bin"))
 
 # load in gensim
 # from gensim.models import KeyedVectors

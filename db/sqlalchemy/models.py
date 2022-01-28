@@ -82,6 +82,7 @@ class Cluster(Base):
     searchable_case_name = Column(TSVECTOR)
     court = Column(Text, index=True)
     courtlistener_json_checksum = Column(String(32))
+    opinion = relationship("Opinion", back_populates="cluster")
 
     __table_args__ = (
         Index('searchable_case_name_idx', 'searchable_case_name', postgresql_using='gin', unique=False),
@@ -105,7 +106,7 @@ class Opinion(Base):
     opinion_uri = Column(Text)
     cluster_uri = Column(Text)
     cluster_id = Column(BigInteger, ForeignKey('cluster.resource_id'))
-    cluster = relationship("Cluster", lazy='joined')
+    cluster = relationship("Cluster", back_populates="opinion")
     html_text = deferred(Column(Text))
     courtlistener_json_checksum = Column(String(32))
 
@@ -116,6 +117,10 @@ class Opinion(Base):
     citations = relationship("Citation",
                              primaryjoin="or_(Opinion.resource_id == Citation.cited_opinion_id, Opinion.resource_id == Citation.citing_opinion_id)",
                              overlaps="citing_opinion,cited_opinion,in_citations,out_citations")
+    citation_contexts = relationship("CitationContext", primaryjoin="Opinion.resource_id == CitationContext.cited_opinion_id",
+                                backref="cited_opinion")
+    opinion_parentheticals = relationship("OpinionParenthetical", primaryjoin="Opinion.resource_id == OpinionParenthetical.cited_opinion_id",
+                                backref="cited_opinion")
 
 
 class OpinionParenthetical(Base):
@@ -127,6 +132,14 @@ class OpinionParenthetical(Base):
     cited_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
     text = Column(Text, nullable=False)
 
+
+class CitationContext(Base):
+    __tablename__ = 'citationcontext'
+    id = Column(Integer, server_default=Sequence('citationcontext_id_seq').next_value(), primary_key=True)
+    citing_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
+    cited_opinion_id = Column(Integer, ForeignKey('opinion.resource_id'), index=True, nullable=False)
+    text = Column(Text, nullable=False)
+    
 
 class Similarity(Base):
     __tablename__ = 'similarity'
