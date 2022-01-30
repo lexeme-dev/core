@@ -77,7 +77,7 @@ class CitationContextScraper:
             Logger.info("Failed to initialize hyperscan, using Ahocorasick...")
             self.eyecite_tokenizer = AhocorasickTokenizer()
         with Pool(self.process_pool_size) as p:
-            p.map(self.__populate_jurisdiction_db_context, JURISDICTIONS)
+            p.map(self.populate_jurisdiction_db_context, JURISDICTIONS)
 
     def __populate_db_contexts_for_opinion(self, session: Session, opinion: Opinion, reporter_resource_dict: dict,
                                            context_slice=slice(-128, 128)) -> None:
@@ -133,7 +133,7 @@ class CitationContextScraper:
                 yield op
             page_no += 1
 
-    def __populate_jurisdiction_db_context(self, jur: Court):
+    def populate_jurisdiction_db_context(self, jur: Court):
         s = Session(create_engine(get_db_url()))
         for i, op in enumerate(self.__batched_opinion_iterator(s, jur)):
             try:
