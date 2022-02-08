@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from db.sqlalchemy.models import Opinion, Cluster, OpinionParenthetical, CitationContext, Court
 from db.sqlalchemy.helpers import get_session, ENGINE, get_db_url
+from extraction.parenthetical_processor import ParentheticalProcessor
 from ingress.helpers import JURISDICTIONS
 from bs4 import BeautifulSoup
 from sqlalchemy import select, create_engine
@@ -34,8 +35,6 @@ STOP_WORDS = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're", "you've", 'your',
               'yours', 'yourself', 'yourselves', ' ', 'court', "court's"}
 LETTERS = set(ascii_lowercase)
-PARENTHETICAL_BLACKLIST_REGEX = re.compile(
-    r"^\s*(?:(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)?)?)?) opinion)|(?:(?:(?:majority|concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result)?)(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result))?)?)?)? ?opinion of \S+ (?:J.|C.\s*J.))|(?:(?:quoting|citing).*)|(?:per curiam)|(?:(?:plurality|majority|dissenting|concurring)(?: (?:opinion|statement))?)|(?:\S+,\s*(?:J.|C.\s*J.(?:, joined by .*,)?)(?:, (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in judgment|in judgment in part|in result|(?:from|with|respecting) ?denial of certiorari)?)?(?: and (?:(?:concurring|dissenting|in chambers|for the Court)(?: (in part|in(?: the)? judgment|in judgment in part|in result|(?:from|with|respecting) denial of certiorari))?)?)?))?)|(?:(?:some )?(?:internal )?(?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis)(?: and (?:brackets?|footnotes?|alterations?|quotations?|quotation marks?|citations?|emphasis))? (?:added|omitted|deleted|in original|altered|modified))|(?:same|similar)|(?:slip op.* \d*)|denying certiorari|\w+(?: I{1,3})?|opinion in chambers|opinion of .*)\s*$")
 
 
 class OneTimeTokenizer(Tokenizer):
@@ -99,16 +98,18 @@ class CitationContextScraper:
             for citation in citation_list:
                 if not isinstance(citation, CaseCitation):
                     continue
-                if citation.metadata.parenthetical is not None and not PARENTHETICAL_BLACKLIST_REGEX.match(
-                        citation.metadata.parenthetical):
+                if citation.metadata.parenthetical is not None and \
+                        ParentheticalProcessor.is_descriptive(citation.metadata.parenthetical):
                     session.add(OpinionParenthetical(citing_opinion_id=opinion.resource_id,
                                                      cited_opinion_id=cited_opinion_res_id,
-                                                     text=citation.metadata.parenthetical))
+                                                     text=ParentheticalProcessor.prepare_text(
+                                                         citation.metadata.parenthetical)))
                 start = max(0, citation.index + context_slice.start)
                 stop = min(len(tokenizer.words), citation.index + context_slice.stop)
                 session.add(CitationContext(citing_opinion_id=opinion.resource_id,
                                             cited_opinion_id=cited_opinion_res_id,
-                                            text=" ".join([s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
+                                            text=" ".join(
+                                                [s for s in tokenizer.words[start:stop] if isinstance(s, str)])))
 
     def __get_reporter_resource_dict(self, session: Session):
         reporter_resource_dict = {}
@@ -128,7 +129,7 @@ class CitationContextScraper:
         page_no = 0
         while opinions := session.execute(
                 select(Opinion).join(Cluster).filter(Cluster.court == jur).limit(batch_size).offset(
-                        page_no * batch_size)).scalars().all():
+                    page_no * batch_size)).scalars().all():
             for op in opinions:
                 yield op
             page_no += 1
