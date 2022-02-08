@@ -70,6 +70,8 @@ we consider textual citation context as part of our recommendation computation.
 5. To populate your database with data from CourtListener, run `lxc data download` with your desired jurisdictions.
 6. To run the API server: `lxc server run`
 
+Bonus: Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` so your `git blame` doesn't catch our reformatting commits.
+
 ## Migrations
 - Run `alembic upgrade head` if your database schema is out of date.
 
