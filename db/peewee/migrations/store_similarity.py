@@ -8,9 +8,15 @@ if __name__ == "__main__":
     for node in citation_network.network.nodes:
         similarity_objects = []
         node_similarity_indexes = citation_network.similarity.most_similar_cases(node)
-        similarity_objects.extend(Similarity(opinion_a=node, opinion_b=key, similarity_index=value)
-                                  for key, value in node_similarity_indexes.items())
+        similarity_objects.extend(
+            Similarity(opinion_a=node, opinion_b=key, similarity_index=value)
+            for key, value in node_similarity_indexes.items()
+        )
         with db.atomic():
             Similarity.bulk_create(similarity_objects, batch_size=1000)
             num_nodes_completed += 1
-            print("{} nodes processed, {:.1%} completed.".format(num_nodes_completed, num_nodes_completed / total_num_nodes))
+            print(
+                "{} nodes processed, {:.1%} completed.".format(
+                    num_nodes_completed, num_nodes_completed / total_num_nodes
+                )
+            )

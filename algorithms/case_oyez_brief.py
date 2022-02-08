@@ -14,6 +14,7 @@ def _hardstrip(s):
     """
     return re.sub(r"[^\w]", "", s).lower()
 
+
 def _cl_get_from_resource_id(rid: int):
     req = requests.get(CLID.format(rid))
     if not req:
@@ -28,13 +29,16 @@ def _cl_get_from_resource_id(rid: int):
             case[k] = v
     return case
 
+
 def _cl_get_from_cite(citation: str):
     """
     Searches a citation and returns its data from courtlistener.
     Must be a full bluebook cite (with reporter)
     """
     if not re.search("\d", citation):
-        raise ValueError("Must be a full bluebook cite with reporter, volume, and page!")
+        raise ValueError(
+            "Must be a full bluebook cite with reporter, volume, and page!"
+        )
     req = requests.get(CLSEARCH.format(citation))
     if not req:
         raise ValueError("Could not find citation in CourtListener!")
@@ -46,7 +50,11 @@ def _cl_get_from_cite(citation: str):
         raise ValueError("{} not found in CourtListener!".format(citation))
     cites = case["citation"]
     if not any([_hardstrip(c) in _hardstrip(citation) for c in cites]):
-        raise ValueError("{} not found in CourtListener! Closest match was {}".format(citation, case["caseName"]))
+        raise ValueError(
+            "{} not found in CourtListener! Closest match was {}".format(
+                citation, case["caseName"]
+            )
+        )
     return case
 
 
@@ -58,7 +66,10 @@ def _oyez_get(approx_term: int, docket_number: str):
             return case
     return None
 
+
 OyezBrief = namedtuple("OyezBrief", ["facts", "question", "conclusion"])
+
+
 def _oyez_brief(approx_term: int, docket_number: str) -> OyezBrief:
     og = _oyez_get(approx_term, docket_number)
     if og:
@@ -74,6 +85,7 @@ def from_cite(citation: str) -> OyezBrief:
         return _oyez_brief(year, cl["docketNumber"])
     except KeyError:
         return None
+
 
 def from_resource_id(rid: int) -> OyezBrief:
     cl = _cl_get_from_resource_id(rid)

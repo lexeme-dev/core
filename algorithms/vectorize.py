@@ -6,9 +6,9 @@ MAX_DEPTH = 122  # To normalize lowest edge weight to 1
 
 def construct_mat():
     db.connect()
-    citations = np.array([ \
-        (c.citing_opinion, c.cited_opinion, c.depth) \
-        for c in Citation.select()])
+    citations = np.array(
+        [(c.citing_opinion, c.cited_opinion, c.depth) for c in Citation.select()]
+    )
     db.close()
     # idk if this is the most efficient way to do this
     citing = np.unique(citations.T[0])

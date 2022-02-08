@@ -8,7 +8,9 @@ class RandomWalker:
     def __init__(self, citation_network):
         self.citation_network = citation_network
 
-    def random_walk(self, source_node, max_walk_length, ignore_opinion_ids=None) -> (str, int):
+    def random_walk(
+        self, source_node, max_walk_length, ignore_opinion_ids=None
+    ) -> (str, int):
         """
         Performs a random walk from the specified source node for the specified number of steps.
 
@@ -20,7 +22,9 @@ class RandomWalker:
         curr_node = source_node
         if ignore_opinion_ids:
             for step in range(walk_length):
-                while (curr_node := self.random_neighbor_fast(curr_node)) in ignore_opinion_ids:
+                while (
+                    curr_node := self.random_neighbor_fast(curr_node)
+                ) in ignore_opinion_ids:
                     pass
         for step in range(walk_length):
             curr_node = self.random_neighbor_fast(curr_node)
@@ -30,4 +34,6 @@ class RandomWalker:
         node_info = self.citation_network.network_edge_list.node_metadata[source_node]
         if node_info.start == node_info.end:
             return source_node
-        return self.citation_network.network_edge_list.edge_list[randrange(node_info.start, node_info.end)]
+        return self.citation_network.network_edge_list.edge_list[
+            randrange(node_info.start, node_info.end)
+        ]

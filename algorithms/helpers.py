@@ -3,7 +3,7 @@ from collections import OrderedDict
 from math import inf
 from typing import Dict, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def top_n(value_dict: Dict[T, float], n: int) -> Dict[T, float]:

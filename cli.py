@@ -22,79 +22,135 @@ def cli():
     pass
 
 
-@cli.group(help='Commands to manage the API server')
+@cli.group(help="Commands to manage the API server")
 def server():
     pass
 
 
-@server.command(name='run', help='Run the Flask API server')
-@click.option('--host', '-h', help='The interface to bind to')
-@click.option('--port', '-p', type=int, help='The port to bind to')
-@click.option('--debug/--no-debug', default=False, show_default=True,
-              help='Whether to run the Flask server in debug mode')
+@server.command(name="run", help="Run the Flask API server")
+@click.option("--host", "-h", help="The interface to bind to")
+@click.option("--port", "-p", type=int, help="The port to bind to")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+    help="Whether to run the Flask server in debug mode",
+)
 def server_run(debug: bool, host: Optional[str], port: Optional[int]):
     app.run(host=host, port=port, debug=debug)
 
 
-@cli.group(help='Commands to download data and populate the database')
+@cli.group(help="Commands to download data and populate the database")
 def data():
     pass
 
 
-@data.command(name='download', help='Download and extract CourtListener jurisdiction data')
-@click.option('-j', '--jurisdictions', type=str, required=True,
-              help='Comma-separated list of jurisdictions to download data for. "all" downloads data for all known jurisdictions.')
+@data.command(
+    name="download", help="Download and extract CourtListener jurisdiction data"
+)
+@click.option(
+    "-j",
+    "--jurisdictions",
+    type=str,
+    required=True,
+    help='Comma-separated list of jurisdictions to download data for. "all" downloads data for all known jurisdictions.',
+)
 def data_download(jurisdictions: str):
-    jurisdictions_arr = list(
-        filter(None, [j for j in jurisdictions.split(',')])) if jurisdictions != 'all' else JURISDICTIONS
+    jurisdictions_arr = (
+        list(filter(None, [j for j in jurisdictions.split(",")]))
+        if jurisdictions != "all"
+        else JURISDICTIONS
+    )
     ClFileDownloader(jurisdictions=jurisdictions_arr).download()
 
 
-@data.command(name='update', help='Update database from downloaded CourtListener data')
-@click.option('-j', '--jurisdictions', type=str, required=True,
-              help='Comma-separated list of jurisdictions to update db for. "all" updates all known jurisdictions.')
-@click.option('--include-text-for', type=str,
-              help='Comma-separated list of jurisdictions to update opinion text for. "all" updates text for all known jurisdictions.')
-@click.option('--force-update/--no-force-update', default=False, show_default=True,
-              help='Updates all database records even if JSON hashes match (indicating no changes since last update).')
+@data.command(name="update", help="Update database from downloaded CourtListener data")
+@click.option(
+    "-j",
+    "--jurisdictions",
+    type=str,
+    required=True,
+    help='Comma-separated list of jurisdictions to update db for. "all" updates all known jurisdictions.',
+)
+@click.option(
+    "--include-text-for",
+    type=str,
+    help='Comma-separated list of jurisdictions to update opinion text for. "all" updates text for all known jurisdictions.',
+)
+@click.option(
+    "--force-update/--no-force-update",
+    default=False,
+    show_default=True,
+    help="Updates all database records even if JSON hashes match (indicating no changes since last update).",
+)
 def data_update(jurisdictions: str, include_text_for: str, force_update: bool):
-    jurisdictions_arr = list(
-        filter(None, [j for j in jurisdictions.split(',')])) if jurisdictions != 'all' else JURISDICTIONS
-    include_text_for_arr = list(
-        filter(None, [j for j in include_text_for.split(',')])) if include_text_for != 'all' else JURISDICTIONS
+    jurisdictions_arr = (
+        list(filter(None, [j for j in jurisdictions.split(",")]))
+        if jurisdictions != "all"
+        else JURISDICTIONS
+    )
+    include_text_for_arr = (
+        list(filter(None, [j for j in include_text_for.split(",")]))
+        if include_text_for != "all"
+        else JURISDICTIONS
+    )
     click.echo(f"Beginning db update for jurisdictions: {jurisdictions_arr}...")
     click.echo(f"Including opinion text for jurisdictions: {include_text_for_arr}...")
-    DbUpdater(jurisdictions=jurisdictions_arr, include_text_for=include_text_for_arr,
-              force_update=force_update).update_from_cl_data()
+    DbUpdater(
+        jurisdictions=jurisdictions_arr,
+        include_text_for=include_text_for_arr,
+        force_update=force_update,
+    ).update_from_cl_data()
 
 
-@data.command(name='scrape-contexts', help='Scrape stored opinion texts for citation contexts and parentheticals')
-@click.option('-p', '--pool-size', type=int, default=1, help='Number of concurrent processes to employ for scraping')
+@data.command(
+    name="scrape-contexts",
+    help="Scrape stored opinion texts for citation contexts and parentheticals",
+)
+@click.option(
+    "-p",
+    "--pool-size",
+    type=int,
+    default=1,
+    help="Number of concurrent processes to employ for scraping",
+)
 def data_scrape_contexts(pool_size: int):
     CitationContextScraper(pool_size).scrape_contexts()
 
 
-@cli.group(help='Commands relating to network embedding')
+@cli.group(help="Commands relating to network embedding")
 def embeddings():
     pass
 
 
-@embeddings.command(name='train', help='Train the Node2Vec embeddings (note: takes significant memory).')
-@click.option('--model-path', type=str, default=N2V_MODEL_PATH, show_default=True,
-              help='Path to save the node2vec model to.')
-@click.option('--csv-path', type=str, default=CITATION_LIST_CSV_PATH, show_default=True,
-              help='Path to find or create the citations CSV for training.')
+@embeddings.command(
+    name="train", help="Train the Node2Vec embeddings (note: takes significant memory)."
+)
+@click.option(
+    "--model-path",
+    type=str,
+    default=N2V_MODEL_PATH,
+    show_default=True,
+    help="Path to save the node2vec model to.",
+)
+@click.option(
+    "--csv-path",
+    type=str,
+    default=CITATION_LIST_CSV_PATH,
+    show_default=True,
+    help="Path to find or create the citations CSV for training.",
+)
 def embeddings_train(model_path: str, csv_path: str):
     EmbeddingTrainer(model_path, csv_path).train()
 
 
-@cli.group(help='Utilities to search and look up cases')
+@cli.group(help="Utilities to search and look up cases")
 def case():
     pass
 
 
-@case.command(name='lookup', help='Look up case info by opinion resource ID')
-@click.argument('resource_id', type=int)
+@case.command(name="lookup", help="Look up case info by opinion resource ID")
+@click.argument("resource_id", type=int)
 def case_lookup(resource_id: int):
     with get_session() as s:
         op = s.execute(select(Opinion).filter_by(resource_id=resource_id)).scalar()
@@ -103,9 +159,15 @@ def case_lookup(resource_id: int):
         click.echo(pretty_print_opinion(op))
 
 
-@case.command(name='search', help='Search cases by name')
-@click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of case results')
-@click.argument('query', type=str)
+@case.command(name="search", help="Search cases by name")
+@click.option(
+    "-n",
+    "--num-cases",
+    default=5,
+    show_default=True,
+    help="Maximum number of case results",
+)
+@click.argument("query", type=str)
 def case_search(query: str, num_cases: int):
     search_results = CaseSearch.search_cases(query, max_cases=num_cases)
     output = f"{len(search_results)} result(s).\n\n"
@@ -114,55 +176,135 @@ def case_search(query: str, num_cases: int):
     click.echo(output.strip())
 
 
-@case.command(name='recommend', help='Produce recommendations for a set of bookmarked cases.')
+@case.command(
+    name="recommend", help="Produce recommendations for a set of bookmarked cases."
+)
 @click.argument("bookmarks", nargs=-1, type=int)
-@click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of recommmendation results')
-@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
-@click.option('-c', '--court', multiple=True, default=[],
-              help='Filter to a specific court id (can be provided multiple times)')
-def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[Court], strategy: CaseRecommendation.Strategy):
+@click.option(
+    "-n",
+    "--num-cases",
+    default=5,
+    show_default=True,
+    help="Maximum number of recommmendation results",
+)
+@click.option(
+    "-s",
+    "--strategy",
+    default="rwalk",
+    show_default=True,
+    help="Strategy for recommendation, can be rwalk or n2v.",
+)
+@click.option(
+    "-c",
+    "--court",
+    multiple=True,
+    default=[],
+    help="Filter to a specific court id (can be provided multiple times)",
+)
+def case_recommend(
+    bookmarks: Tuple[int],
+    num_cases: int,
+    court: Tuple[Court],
+    strategy: CaseRecommendation.Strategy,
+):
     from db.peewee.models import Opinion, Cluster
+
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     recommendation = CaseRecommendation(citation_network)
-    recommendations = recommendation.recommendations(frozenset(bookmarks), num_cases, courts=frozenset(court), strategy=strategy)
+    recommendations = recommendation.recommendations(
+        frozenset(bookmarks), num_cases, courts=frozenset(court), strategy=strategy
+    )
     with get_session() as s:
         ro = sorted(
-            Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
+            Opinion.select()
+            .join(Cluster)
+            .where(Opinion.resource_id << list(recommendations.keys())),
             key=lambda op: recommendations[op.resource_id],
-            reverse=True
+            reverse=True,
         )
         for op in ro:
             click.echo(pretty_print_opinion(op))
 
 
-@cli.group(help='Utilities to measure algorithm performance')
+@cli.group(help="Utilities to measure algorithm performance")
 def stats():
     pass
 
 
-@stats.command(name='recall', help='Measure quality of recommendations for a given case.')
-@click.argument('cases', nargs=-1, type=int)
-@click.option('-c', '--court', multiple=True, default=[],
-              help='Filter topN results to a specific court id (can be provided multiple times)')
-@click.option('-n', '--num-trials', default=10, help='Number of trials to do for a court.')
-@click.option('--same-court/--no-same-court', default=True, help='whether to look for topN only in same court')
-@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
-def cli_case_recall(cases: Tuple[int], court: Tuple[Court], num_trials: int, same_court: bool, strategy: CaseRecommendation.Strategy):
+@stats.command(
+    name="recall", help="Measure quality of recommendations for a given case."
+)
+@click.argument("cases", nargs=-1, type=int)
+@click.option(
+    "-c",
+    "--court",
+    multiple=True,
+    default=[],
+    help="Filter topN results to a specific court id (can be provided multiple times)",
+)
+@click.option(
+    "-n", "--num-trials", default=10, help="Number of trials to do for a court."
+)
+@click.option(
+    "--same-court/--no-same-court",
+    default=True,
+    help="whether to look for topN only in same court",
+)
+@click.option(
+    "-s",
+    "--strategy",
+    default="rwalk",
+    show_default=True,
+    help="Strategy for recommendation, can be rwalk or n2v.",
+)
+def cli_case_recall(
+    cases: Tuple[int],
+    court: Tuple[Court],
+    num_trials: int,
+    same_court: bool,
+    strategy: CaseRecommendation.Strategy,
+):
     if strategy == CaseRecommendation.Strategy.N2V:
         raise NotImplementedError("Cannot currently measure recall for n2v!")
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
-    case_recall = CaseRecall(citation_network).case_recall(cases, court, num_trials, same_court, strategy=strategy)
+    case_recall = CaseRecall(citation_network).case_recall(
+        cases, court, num_trials, same_court, strategy=strategy
+    )
 
 
-@stats.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
-@click.option('-c', '--num-cases', default=20, help='Number of cases to test recall for.')
-@click.option('-t', '--num-trials', default=5, help='Number of trials to do for a court.')
-@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
-@click.option('--same-court/--no-same-court', default=True, help='whether to look for topN only in same court')
-def cli_case_recall(num_cases: int, num_trials: int, same_court: bool, strategy: CaseRecommendation.Strategy):
+@stats.command(
+    name="randrecall",
+    help="Measure quality of recommendations for a set of random cases.",
+)
+@click.option(
+    "-c", "--num-cases", default=20, help="Number of cases to test recall for."
+)
+@click.option(
+    "-t", "--num-trials", default=5, help="Number of trials to do for a court."
+)
+@click.option(
+    "-s",
+    "--strategy",
+    default="rwalk",
+    show_default=True,
+    help="Strategy for recommendation, can be rwalk or n2v.",
+)
+@click.option(
+    "--same-court/--no-same-court",
+    default=True,
+    help="whether to look for topN only in same court",
+)
+def cli_case_recall(
+    num_cases: int,
+    num_trials: int,
+    same_court: bool,
+    strategy: CaseRecommendation.Strategy,
+):
     if strategy == CaseRecommendation.Strategy.N2V:
         raise NotImplementedError("Cannot currently measure recall for n2v!")
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
-    case_recall = CaseRecall(citation_network).case_recall(num_cases, (), num_trials, same_court, strategy=strategy)
+    case_recall = CaseRecall(citation_network).case_recall(
+        num_cases, (), num_trials, same_court, strategy=strategy
+    )

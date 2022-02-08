@@ -14,10 +14,10 @@ role_extractor = RoleExtractor(n_roles=None)
 role_extractor.extract_role_factors(features)
 node_roles = role_extractor.roles
 
-print('\nNode role assignments:')
+print("\nNode role assignments:")
 print(node_roles)
 
-print('\nNode role membership by percentage:')
+print("\nNode role membership by percentage:")
 print(role_extractor.role_percentage.round(2))
 # TODO: When I come back to this, use the debugger console to save the generated data structures to disk (using pickle, I believe)
 print("Done.")

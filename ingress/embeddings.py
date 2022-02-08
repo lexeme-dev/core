@@ -17,14 +17,10 @@ class EmbeddingTrainer:
 
     def train(self):
         graph = self.__get_csr_graph()
-        Logger.info('Training node2vec embeddings...')
-        g2v = Node2Vec(
-            n_components=32,
-            walklen=8,
-            epochs=25
-        )
+        Logger.info("Training node2vec embeddings...")
+        g2v = Node2Vec(n_components=32, walklen=8, epochs=25)
         g2v.fit(graph)
-        Logger.info(f'Training done. Saving embeddings to {self.model_path}')
+        Logger.info(f"Training done. Saving embeddings to {self.model_path}")
         g2v.save_vectors(self.model_path)
 
     def __get_csr_graph(self) -> csrgraph.csrgraph:
@@ -32,4 +28,4 @@ class EmbeddingTrainer:
             Logger.info("Couldn't find citation CSV, generating from database...")
             create_citations_csv()
         Logger.info("Initializing CSR graph for embedding training...")
-        return csrgraph.read_edgelist(self.csv_path, directed=False, sep=',')
+        return csrgraph.read_edgelist(self.csv_path, directed=False, sep=",")

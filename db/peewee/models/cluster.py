@@ -4,20 +4,20 @@ from db.peewee.models import BaseModel
 
 
 class Court:
-    SCOTUS = 'scotus'
-    CA1 = 'ca1'
-    CA2 = 'ca2'
-    CA3 = 'ca3'
-    CA4 = 'ca4'
-    CA5 = 'ca5'
-    CA6 = 'ca6'
-    CA7 = 'ca7'
-    CA8 = 'ca8'
-    CA9 = 'ca9'
-    CA10 = 'ca10'
-    CA11 = 'ca11'
-    CADC = 'cadc'
-    CAFC = 'cafc'
+    SCOTUS = "scotus"
+    CA1 = "ca1"
+    CA2 = "ca2"
+    CA3 = "ca3"
+    CA4 = "ca4"
+    CA5 = "ca5"
+    CA6 = "ca6"
+    CA7 = "ca7"
+    CA8 = "ca8"
+    CA9 = "ca9"
+    CA10 = "ca10"
+    CA11 = "ca11"
+    CADC = "cadc"
+    CAFC = "cafc"
 
 
 class Cluster(BaseModel):
@@ -35,4 +35,10 @@ class Cluster(BaseModel):
     @staticmethod
     def case_display_name():
         """Plaintiff v. Defendant, Reporter (Year), written in query syntax."""
-        return fn.CONCAT(Cluster.case_name, fn.coalesce(fn.CONCAT(', ', Cluster.reporter)), ' (', Cluster.year, ')')
+        return fn.CONCAT(
+            Cluster.case_name,
+            fn.coalesce(fn.CONCAT(", ", Cluster.reporter)),
+            " (",
+            Cluster.year,
+            ")",
+        )
