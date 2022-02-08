@@ -5,6 +5,7 @@ from algorithms.random_walker import RandomWalker
 from algorithms.helpers import top_n
 from utils.logger import Logger
 from db.sqlalchemy.models import Court
+from enum import Enum
 
 MAX_NUM_STEPS = 200_000
 MAX_WALK_LENGTH = 5
@@ -12,16 +13,22 @@ MAX_WALK_LENGTH = 5
 VISITED_FREQ_THRESHOLD = 100
 NUM_VISITED_THRESHOLD = 25
 
-
 class CaseRecommendation:
     citation_network: CitationNetwork
     random_walker: RandomWalker
+
+    class Strategy(Enum):
+        N2V = CaseRecommendation.n2v
+        RWALK = CaseRecommendation.rwalk
 
     def __init__(self, citation_network: CitationNetwork):
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations_n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]) \
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court], strategy: CaseRecommendation.Strategy=CaseRecommendation.Strategy.RWALK):
+        return strategy(self, opinion_ids, num_recommendations, courts)
+
+    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]) \
             -> Dict[int, float]:
         """
         Recommendations powered by Node2Vec network embeddings
@@ -42,7 +49,7 @@ class CaseRecommendation:
                     self.citation_network.network_edge_list.node_metadata[resource_id].court in courts]
         return dict(recs[:num_recommendations])
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
+    def rwalk(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
                         max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
                         ignore_opinion_ids: frozenset = None, before_year: int = None) -> Dict[int, float]:
         query_case_weights = self.input_case_weights(opinion_ids)
