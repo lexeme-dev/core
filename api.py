@@ -4,7 +4,13 @@ from http import HTTPStatus
 from io import BufferedReader
 from playhouse.shortcuts import model_to_dict
 
-from algorithms import CaseSearch, CaseClustering, CaseRecommendation, CaseSimilarity, case_oyez_brief
+from algorithms import (
+    CaseSearch,
+    CaseClustering,
+    CaseRecommendation,
+    CaseSimilarity,
+    case_oyez_brief,
+)
 from db.peewee.models import Opinion, Cluster, DEFAULT_SERIALIZATION_ARGS
 from db.peewee.helpers import model_list_to_json, model_list_to_dicts
 from extraction.pdf_engine import PdfEngine
@@ -37,18 +43,18 @@ def configure_caching(response: Flask.response_class):
 
 
 # TODO: If necessary (because extraction and parsing is slow), we can implement this as a stateful background job.
-@app.route('/pdf/upload', methods=['POST'])
+@app.route("/pdf/upload", methods=["POST"])
 def upload_pdf():
-    file = request.files.get('file')
+    file = request.files.get("file")
     if file is None:
         return "No file provided.", HTTPStatus.UNPROCESSABLE_ENTITY
     pdf_text = PdfEngine(BufferedReader(file)).get_text()
     citations = list(CitationExtractor(pdf_text).get_extracted_citations())
-    return model_list_to_json(citations, extra_attrs=['parentheticals'])
+    return model_list_to_json(citations, extra_attrs=["parentheticals"])
 
 
 # TODO: All of these /cases/ routes can be refactored into their own Flask blueprint
-@app.route('/cases/<int:resource_id>')
+@app.route("/cases/<int:resource_id>")
 def get_case(resource_id: int):
     try:
         opinion = Opinion.get(resource_id=resource_id)
@@ -57,7 +63,7 @@ def get_case(resource_id: int):
         abort(HTTPStatus.NOT_FOUND)
 
 
-@app.route('/cases/<int:resource_id>/html')
+@app.route("/cases/<int:resource_id>/html")
 def get_case_html(resource_id: int):
     try:
         opinion = Opinion.get(resource_id=resource_id)
@@ -68,57 +74,67 @@ def get_case_html(resource_id: int):
         abort(HTTPStatus.NOT_FOUND)
 
 
-@app.route('/cases/similar')
+@app.route("/cases/similar")
 def get_similar_cases():
-    case_resource_ids = request.args.getlist('cases')
-    max_cases = request.args.get('max_cases') or 25
+    case_resource_ids = request.args.getlist("cases")
+    max_cases = request.args.get("max_cases") or 25
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    similar_case_query = similarity.db_case_similarity(frozenset(case_resource_ids), max_cases)
-    similar_cases = [similarity_record.opinion_b for similarity_record in similar_case_query]
+    similar_case_query = similarity.db_case_similarity(
+        frozenset(case_resource_ids), max_cases
+    )
+    similar_cases = [
+        similarity_record.opinion_b for similarity_record in similar_case_query
+    ]
     return model_list_to_json(similar_cases)
 
 
-@app.route('/cases/recommendations')
+@app.route("/cases/recommendations")
 def get_recommended_cases():
-    case_resource_ids = frozenset(map(int, request.args.getlist('cases')))
-    court_ids = frozenset(map(str, request.args.getlist('courts')))
-    max_cases = int(request.args.get('max_cases') or 10)
+    case_resource_ids = frozenset(map(int, request.args.getlist("cases")))
+    court_ids = frozenset(map(str, request.args.getlist("courts")))
+    max_cases = int(request.args.get("max_cases") or 10)
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    recommendations = recommendation.recommendations(case_resource_ids, max_cases, courts=court_ids)
+    recommendations = recommendation.recommendations(
+        case_resource_ids, max_cases, courts=court_ids
+    )
     recommended_opinions = sorted(
-        Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
+        Opinion.select()
+        .join(Cluster)
+        .where(Opinion.resource_id << list(recommendations.keys())),
         key=lambda op: recommendations[op.resource_id],
-        reverse=True
+        reverse=True,
     )
     return model_list_to_json(recommended_opinions)
 
 
-@app.route('/cases/search')
+@app.route("/cases/search")
 def search():
-    search_query = request.args.get('query')
-    max_cases = request.args.get('max_cases')
+    search_query = request.args.get("query")
+    max_cases = request.args.get("max_cases")
     if search_query is None or len(search_query) == 0:
         return jsonify([])
     search_results = CaseSearch.search_cases(search_query, max_cases=max_cases)
-    return model_list_to_json(search_results, extra_attrs=['headline'])
+    return model_list_to_json(search_results, extra_attrs=["headline"])
 
 
-@app.route('/cases/<int:resource_id>/oyez_brief')
+@app.route("/cases/<int:resource_id>/oyez_brief")
 def get_oyez_brief(resource_id: int):
     if brief := case_oyez_brief.from_resource_id(resource_id):
         return brief._asdict()
     abort(HTTPStatus.NOT_FOUND)
 
 
-@app.route('/cases/cluster')
+@app.route("/cases/cluster")
 def get_case_clusters():
-    case_resource_ids = [int(c) for c in request.args.getlist('cases')]
-    num_clusters = int(request.args.get('num_clusters') or 0) or None
+    case_resource_ids = [int(c) for c in request.args.getlist("cases")]
+    num_clusters = int(request.args.get("num_clusters") or 0) or None
     if len(case_resource_ids) < 1:
         return "You must provide at least one case ID.", HTTPStatus.UNPROCESSABLE_ENTITY
-    clusters = clustering.spectral_cluster(set(case_resource_ids), num_clusters=num_clusters)
+    clusters = clustering.spectral_cluster(
+        set(case_resource_ids), num_clusters=num_clusters
+    )
     output_dict = {}
     for cluster_name, opinion_ids in clusters.items():
         opinion_models = Opinion.select().where(Opinion.resource_id << opinion_ids)

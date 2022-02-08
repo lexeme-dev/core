@@ -14,5 +14,5 @@ def set_primary_keys_to_serial():
         db.execute_sql(serial_query)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     set_primary_keys_to_serial()

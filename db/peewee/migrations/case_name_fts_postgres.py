@@ -33,7 +33,7 @@ def create_case_index_trigger():
     db.execute_sql(trigger_query)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # db.execute_sql("DROP TRIGGER update_searchable_case_name ON cluster; DROP FUNCTION update_searchable_case_name_trigger;")
     create_case_name_index()
     create_case_index_trigger()

@@ -21,9 +21,7 @@ class CaseClustering:
         slaplacian = nx.laplacian_matrix(sgraph).toarray()
         slaplacian += 1
         sdist = slaplacian * (1 - np.identity(slaplacian.shape[0]))
-        labels = DBSCAN(eps=eps, min_samples=1, metric="precomputed") \
-            .fit(sdist) \
-            .labels_
+        labels = DBSCAN(eps=eps, min_samples=1, metric="precomputed").fit(sdist).labels_
         output = {}
         for c, l in zip(opinion_ids, labels):
             if not l in output:
@@ -37,7 +35,13 @@ class CaseClustering:
         if num_clusters is None:
             num_clusters = self.optimal_num_clusters(affinity_mat)
 
-        labels = SpectralClustering(num_clusters, affinity='precomputed', assign_labels='discretize').fit(affinity_mat).labels_
+        labels = (
+            SpectralClustering(
+                num_clusters, affinity="precomputed", assign_labels="discretize"
+            )
+            .fit(affinity_mat)
+            .labels_
+        )
         output = {}
         for c, l in zip(opinion_ids, labels):
             if l not in output:
@@ -54,6 +58,8 @@ class CaseClustering:
         for i in range(1, len(eigenvalues)):
             if (curr_drop := eigenvalues[i - 1] - eigenvalues[i]) > largest_drop:
                 largest_drop, largest_drop_index = curr_drop, i
-            if eigenvalues[i] < 0.2:  # Impose a baseline filter to avoid over-partitioning cases
+            if (
+                eigenvalues[i] < 0.2
+            ):  # Impose a baseline filter to avoid over-partitioning cases
                 break
         return largest_drop_index or 1

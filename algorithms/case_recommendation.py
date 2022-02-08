@@ -27,15 +27,26 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court],
-                        strategy: Strategy = Strategy.RWALK, **kwargs):
+    def recommendations(
+        self,
+        opinion_ids: frozenset,
+        num_recommendations,
+        courts: frozenset[Court],
+        strategy: Strategy = Strategy.RWALK,
+        **kwargs,
+    ):
         if strategy == CaseRecommendation.Strategy.RWALK:
             return self.rwalk(opinion_ids, num_recommendations, courts, options=kwargs)
         else:
             return self.n2v(opinion_ids, num_recommendations, courts, options=kwargs)
 
-    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) \
-            -> Dict[int, float]:
+    def n2v(
+        self,
+        opinion_ids: frozenset,
+        num_recommendations,
+        courts: frozenset[Court] = None,
+        options=None,
+    ) -> Dict[int, float]:
         """
         Recommendations powered by Node2Vec network embeddings
         :param options:
@@ -51,48 +62,83 @@ class CaseRecommendation:
         # Eventually we want to implement the KNN logic ourselves (it's fairly simple) so we don't have to do
         # kludgey stuff like this.
         gensim_topn = num_recommendations * 100
-        recs = [(int(resource_id), float(relevance)) for resource_id, relevance in
-                self.citation_network.n2v_model.most_similar(positive=opinion_ids, topn=gensim_topn)]
+        recs = [
+            (int(resource_id), float(relevance))
+            for resource_id, relevance in self.citation_network.n2v_model.most_similar(
+                positive=opinion_ids, topn=gensim_topn
+            )
+        ]
         if courts:
-            recs = [(resource_id, relevance) for resource_id, relevance in recs if
-                    self.citation_network.network_edge_list.node_metadata[resource_id].court in courts]
+            recs = [
+                (resource_id, relevance)
+                for resource_id, relevance in recs
+                if self.citation_network.network_edge_list.node_metadata[
+                    resource_id
+                ].court
+                in courts
+            ]
         # TODO: Add before_year support
         return dict(recs[:num_recommendations])
 
-    def rwalk(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) -> Dict[int, float]:
+    def rwalk(
+        self,
+        opinion_ids: frozenset,
+        num_recommendations,
+        courts: frozenset[Court] = None,
+        options=None,
+    ) -> Dict[int, float]:
         if options is None:
             options = {}
-        max_walk_length = options.get('max_walk_length', MAX_WALK_LENGTH)
-        max_num_steps = options.get('max_num_steps', MAX_NUM_STEPS)
-        ignore_opinion_ids = options.get('ignore_opinion_ids', None)
-        before_year = options.get('before_year', None)
+        max_walk_length = options.get("max_walk_length", MAX_WALK_LENGTH)
+        max_num_steps = options.get("max_num_steps", MAX_NUM_STEPS)
+        ignore_opinion_ids = options.get("ignore_opinion_ids", None)
+        before_year = options.get("before_year", None)
 
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
             curr_max_num_steps = int(weight * max_num_steps)
-            curr_freq_dict = self.recommendations_for_case(int(opinion_id), num_recommendations=None,
-                                                           max_walk_length=max_walk_length,
-                                                           max_num_steps=curr_max_num_steps,
-                                                           ignore_opinion_ids=ignore_opinion_ids)
+            curr_freq_dict = self.recommendations_for_case(
+                int(opinion_id),
+                num_recommendations=None,
+                max_walk_length=max_walk_length,
+                max_num_steps=curr_max_num_steps,
+                ignore_opinion_ids=ignore_opinion_ids,
+            )
             for node, freq in curr_freq_dict.items():
                 if node in opinion_ids:
                     continue
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
-                overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
+                overall_node_freq_dict[node] += sqrt(
+                    freq
+                )  # See Eq. 3 of Eksombatchai et. al (2018)
         # want this to be done before filtering out years
         if courts:
-            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
-                                      if self.citation_network.network_edge_list.node_metadata[k].court in courts}
+            overall_node_freq_dict = {
+                k: v
+                for k, v in overall_node_freq_dict.items()
+                if self.citation_network.network_edge_list.node_metadata[k].court
+                in courts
+            }
         if before_year:
-            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
-                                      if self.citation_network.network_edge_list.node_metadata[k].year <= before_year}
+            overall_node_freq_dict = {
+                k: v
+                for k, v in overall_node_freq_dict.items()
+                if self.citation_network.network_edge_list.node_metadata[k].year
+                <= before_year
+            }
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
         return top_n_recommendations
 
-    def recommendations_for_case(self, opinion_id, num_recommendations, ignore_opinion_ids: frozenset = None,
-                                 max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS) -> Dict[str, float]:
+    def recommendations_for_case(
+        self,
+        opinion_id,
+        num_recommendations,
+        ignore_opinion_ids: frozenset = None,
+        max_walk_length=MAX_WALK_LENGTH,
+        max_num_steps=MAX_NUM_STEPS,
+    ) -> Dict[str, float]:
         """
         Random-walk recommendation algorithm to return relevant cases given a case ID. Heavily based on
         Eksombatchai et. al (2018)'s Pixie recommendation algorithm for Pinterest.
@@ -105,9 +151,12 @@ class CaseRecommendation:
         """
         node_freq_dict = {}
         num_steps = 0
-        while num_steps < max_num_steps:  # Keep a constant worst-case bound on execution time
-            random_walk_dest, walk_length = self.random_walker.random_walk(opinion_id, max_walk_length=5,
-                                                                           ignore_opinion_ids=ignore_opinion_ids)
+        while (
+            num_steps < max_num_steps
+        ):  # Keep a constant worst-case bound on execution time
+            random_walk_dest, walk_length = self.random_walker.random_walk(
+                opinion_id, max_walk_length=5, ignore_opinion_ids=ignore_opinion_ids
+            )
             if random_walk_dest == opinion_id:
                 continue
             if random_walk_dest not in node_freq_dict:
@@ -135,11 +184,17 @@ class CaseRecommendation:
                 max_degree = node_metadata.length
         if total_num_edges == 0:
             return {op_id: 0 for op_id in opinion_ids}
-        denormalized_weights = {op_id: self.denormalized_case_weight(node_degree, max_degree, total_num_edges)
-                                for op_id, node_degree in node_degrees.items()}
+        denormalized_weights = {
+            op_id: self.denormalized_case_weight(
+                node_degree, max_degree, total_num_edges
+            )
+            for op_id, node_degree in node_degrees.items()
+        }
         denormalized_weight_sum = sum(denormalized_weights.values())
-        normalized_weights = {op_id: node_weight / denormalized_weight_sum for op_id, node_weight in
-                              denormalized_weights.items()}
+        normalized_weights = {
+            op_id: node_weight / denormalized_weight_sum
+            for op_id, node_weight in denormalized_weights.items()
+        }
         return normalized_weights
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
@@ -148,7 +203,11 @@ class CaseRecommendation:
     def average_year_of_cases(self, nodes: frozenset) -> float:
         sum_years, num_nodes = 0, 0
         for node in nodes:
-            if (node_year := self.citation_network.network_edge_list.node_metadata[node].year) is not None:
+            if (
+                node_year := self.citation_network.network_edge_list.node_metadata[
+                    node
+                ].year
+            ) is not None:
                 sum_years += node_year
                 num_nodes += 1
         return sum_years / num_nodes
