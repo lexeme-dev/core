@@ -5,6 +5,8 @@ from algorithms.random_walker import RandomWalker
 from algorithms.helpers import top_n
 from utils.logger import Logger
 from db.sqlalchemy.models import Court
+from enum import Enum
+from typing import Callable
 
 MAX_NUM_STEPS = 200_000
 MAX_WALK_LENGTH = 5
@@ -17,13 +19,54 @@ class CaseRecommendation:
     citation_network: CitationNetwork
     random_walker: RandomWalker
 
+    class Strategy(str, Enum):
+        N2V = "n2v"
+        RWALK = "rwalk"
+
     def __init__(self, citation_network: CitationNetwork):
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
-                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
-                        ignore_opinion_ids: frozenset = None) -> Dict[str, float]:
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court],
+                        strategy: Strategy = Strategy.RWALK, **kwargs):
+        if strategy == CaseRecommendation.Strategy.RWALK:
+            return self.rwalk(opinion_ids, num_recommendations, courts, options=kwargs)
+        else:
+            return self.n2v(opinion_ids, num_recommendations, courts, options=kwargs)
+
+    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) \
+            -> Dict[int, float]:
+        """
+        Recommendations powered by Node2Vec network embeddings
+        :param options:
+        :param opinion_ids:
+        :param num_recommendations: The number of cases to return
+        :param courts: Which courts to return cases from
+        :return: A dictionary of the top num_recommendation opinion IDs and their relevance values
+        """
+        if options is None:
+            options = {}  # Currently not used but perhaps in the future
+        opinion_ids = list(map(str, opinion_ids))
+        # Hacky fix to ensure we have enough recommendations to filter out the non-matching courts
+        # Eventually we want to implement the KNN logic ourselves (it's fairly simple) so we don't have to do
+        # kludgey stuff like this.
+        gensim_topn = num_recommendations * 100
+        recs = [(int(resource_id), float(relevance)) for resource_id, relevance in
+                self.citation_network.n2v_model.most_similar(positive=opinion_ids, topn=gensim_topn)]
+        if courts:
+            recs = [(resource_id, relevance) for resource_id, relevance in recs if
+                    self.citation_network.network_edge_list.node_metadata[resource_id].court in courts]
+        # TODO: Add before_year support
+        return dict(recs[:num_recommendations])
+
+    def rwalk(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) -> Dict[int, float]:
+        if options is None:
+            options = {}
+        max_walk_length = options.get('max_walk_length', MAX_WALK_LENGTH)
+        max_num_steps = options.get('max_num_steps', MAX_NUM_STEPS)
+        ignore_opinion_ids = options.get('ignore_opinion_ids', None)
+        before_year = options.get('before_year', None)
+
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
@@ -38,11 +81,13 @@ class CaseRecommendation:
                 if node not in overall_node_freq_dict:
                     overall_node_freq_dict[node] = 0
                 overall_node_freq_dict[node] += sqrt(freq)  # See Eq. 3 of Eksombatchai et. al (2018)
-        average_case_year = self.average_year_of_cases(opinion_ids)
         # want this to be done before filtering out years
         if courts:
-            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items() \
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
                                       if self.citation_network.network_edge_list.node_metadata[k].court in courts}
+        if before_year:
+            overall_node_freq_dict = {k: v for k, v in overall_node_freq_dict.items()
+                                      if self.citation_network.network_edge_list.node_metadata[k].year <= before_year}
         top_n_recommendations = top_n(overall_node_freq_dict, num_recommendations)
         return top_n_recommendations
 
@@ -71,7 +116,7 @@ class CaseRecommendation:
             num_steps += walk_length
         return top_n(node_freq_dict, num_recommendations)
 
-    def input_case_weights(self, opinion_ids) -> Dict[str, float]:
+    def input_case_weights(self, opinion_ids) -> Dict[int, float]:
         """
         Given a set of opinion IDs in a query, give the probability distribution with which to visit them based on
         their degree centralities.
@@ -99,20 +144,6 @@ class CaseRecommendation:
 
     def denormalized_case_weight(self, node_degree, max_degree, total_num_edges):
         return (node_degree * (max_degree - log(node_degree))) / total_num_edges
-
-    def time_adjusted_score(self, unadjusted_score, year_distance) -> float:
-        pass
-
-    def obscurity_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        pass
-
-    def relevance_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
-        return unadjusted_score / log(floored_num_neighbors)
-
-    def landmark_adjusted_score(self, unadjusted_score, num_neighbors) -> float:
-        floored_num_neighbors = min(max(num_neighbors, 50), 1000)
-        return unadjusted_score * log(floored_num_neighbors)
 
     def average_year_of_cases(self, nodes: frozenset) -> float:
         sum_years, num_nodes = 0, 0

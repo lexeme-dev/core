@@ -14,10 +14,10 @@ from utils.logger import Logger
 
 app = Flask(__name__)
 CORS(app)
-citation_network = None
-similarity = None
-clustering = None
-recommendation = None
+citation_network: CitationNetwork = None
+similarity: CaseSimilarity = None
+clustering: CaseClustering = None
+recommendation: CaseRecommendation = None
 
 
 @app.before_first_request
