@@ -14,6 +14,7 @@ MAX_WALK_LENGTH = 5
 VISITED_FREQ_THRESHOLD = 100
 NUM_VISITED_THRESHOLD = 25
 
+
 class CaseRecommendation:
     citation_network: CitationNetwork
     random_walker: RandomWalker
@@ -26,21 +27,25 @@ class CaseRecommendation:
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court], strategy: Strategy=Strategy.RWALK, **kwargs):
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court],
+                        strategy: Strategy = Strategy.RWALK, **kwargs):
         if strategy == CaseRecommendation.Strategy.RWALK:
-            return self.rwalk(opinion_ids, num_recommendations, courts, **kwargs)
+            return self.rwalk(opinion_ids, num_recommendations, courts, options=kwargs)
         else:
-            return self.n2v(opinion_ids, num_recommendations, courts, **kwargs)
+            return self.n2v(opinion_ids, num_recommendations, courts, options=kwargs)
 
-    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]=None) \
+    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) \
             -> Dict[int, float]:
         """
         Recommendations powered by Node2Vec network embeddings
+        :param options:
         :param opinion_ids:
         :param num_recommendations: The number of cases to return
         :param courts: Which courts to return cases from
         :return: A dictionary of the top num_recommendation opinion IDs and their relevance values
         """
+        if options is None:
+            options = {}  # Currently not used but perhaps in the future
         opinion_ids = list(map(str, opinion_ids))
         # Hacky fix to ensure we have enough recommendations to filter out the non-matching courts
         # Eventually we want to implement the KNN logic ourselves (it's fairly simple) so we don't have to do
@@ -51,11 +56,17 @@ class CaseRecommendation:
         if courts:
             recs = [(resource_id, relevance) for resource_id, relevance in recs if
                     self.citation_network.network_edge_list.node_metadata[resource_id].court in courts]
+        # TODO: Add before_year support
         return dict(recs[:num_recommendations])
 
-    def rwalk(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None,
-                        max_walk_length=MAX_WALK_LENGTH, max_num_steps=MAX_NUM_STEPS,
-                        ignore_opinion_ids: frozenset = None, before_year: int = None) -> Dict[int, float]:
+    def rwalk(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court] = None, options=None) -> Dict[int, float]:
+        if options is None:
+            options = {}
+        max_walk_length = options.get('max_walk_length', MAX_WALK_LENGTH)
+        max_num_steps = options.get('max_num_steps', MAX_NUM_STEPS)
+        ignore_opinion_ids = options.get('ignore_opinion_ids', None)
+        before_year = options.get('before_year', None)
+
         query_case_weights = self.input_case_weights(opinion_ids)
         overall_node_freq_dict = {}
         for opinion_id, weight in query_case_weights.items():
