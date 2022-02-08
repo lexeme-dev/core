@@ -12,7 +12,7 @@ from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
 from ingress.embeddings import EmbeddingTrainer
 from ingress.helpers import JURISDICTIONS
-from ingress.scrape_citation_contexts import CitationContextScraper
+from ingress.citation_context_scraper import CitationContextScraper
 from utils.format import pretty_print_opinion
 from utils.io import N2V_MODEL_PATH, CITATION_LIST_CSV_PATH
 
