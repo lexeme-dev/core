@@ -12,6 +12,7 @@ from ingress.cl_file_downloader import ClFileDownloader
 from ingress.db_updater import DbUpdater
 from ingress.embeddings import EmbeddingTrainer
 from ingress.helpers import JURISDICTIONS
+from ingress.citation_context_scraper import CitationContextScraper
 from utils.format import pretty_print_opinion
 from utils.io import N2V_MODEL_PATH, CITATION_LIST_CSV_PATH
 
@@ -65,6 +66,12 @@ def data_update(jurisdictions: str, include_text_for: str, force_update: bool):
     click.echo(f"Including opinion text for jurisdictions: {include_text_for_arr}...")
     DbUpdater(jurisdictions=jurisdictions_arr, include_text_for=include_text_for_arr,
               force_update=force_update).update_from_cl_data()
+
+
+@data.command(name='scrape-contexts', help='Scrape stored opinion texts for citation contexts and parentheticals')
+@click.option('-p', '--pool-size', type=int, default=1, help='Number of concurrent processes to employ for scraping')
+def data_scrape_contexts(pool_size: int):
+    CitationContextScraper(pool_size).scrape_contexts()
 
 
 @cli.group(help='Commands relating to network embedding')
@@ -137,15 +144,15 @@ def stats():
 @click.argument('cases', nargs=-1, type=int)
 @click.option('-c', '--court', multiple=True, default=[],
               help='Filter topN results to a specific court id (can be provided multiple times)')
-@click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('-n', '--num-trials', default=10, help='Number of trials to do for a court.')
+@click.option('--same-court/--no-same-court', default=True, help='whether to look for topN only in same court')
 @click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
-@click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
-def cli_case_recall(cases: Tuple[int], court: Tuple[Court], numtrials: int, samecourt: bool, strategy: CaseRecommendation.Strategy):
+def cli_case_recall(cases: Tuple[int], court: Tuple[Court], num_trials: int, same_court: bool, strategy: CaseRecommendation.Strategy):
     if strategy == CaseRecommendation.Strategy.N2V:
         raise NotImplementedError("Cannot currently measure recall for n2v!")
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
-    case_recall = CaseRecall(citation_network).case_recall(cases, court, numtrials, samecourt, strategy=strategy)
+    case_recall = CaseRecall(citation_network).case_recall(cases, court, num_trials, same_court, strategy=strategy)
 
 
 @stats.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
