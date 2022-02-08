@@ -110,13 +110,14 @@ def case_search(query: str, num_cases: int):
 @case.command(name='recommend', help='Produce recommendations for a set of bookmarked cases.')
 @click.argument("bookmarks", nargs=-1, type=int)
 @click.option('-n', '--num-cases', default=5, show_default=True, help='Maximum number of recommmendation results')
+@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
 @click.option('-c', '--court', multiple=True, default=[],
               help='Filter to a specific court id (can be provided multiple times)')
-def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[Court]):
+def case_recommend(bookmarks: Tuple[int], num_cases: int, court: Tuple[Court], strategy: CaseRecommendation.Strategy):
     from db.peewee.models import Opinion, Cluster
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     recommendation = CaseRecommendation(citation_network)
-    recommendations = recommendation.recommendations(frozenset(bookmarks), num_cases, courts=frozenset(court))
+    recommendations = recommendation.recommendations(frozenset(bookmarks), num_cases, courts=frozenset(court), strategy=strategy)
     with get_session() as s:
         ro = sorted(
             Opinion.select().join(Cluster).where(Opinion.resource_id << list(recommendations.keys())),
@@ -137,18 +138,24 @@ def stats():
 @click.option('-c', '--court', multiple=True, default=[],
               help='Filter topN results to a specific court id (can be provided multiple times)')
 @click.option('-n', '--numtrials', default=10, help='Number of trials to do for a court.')
+@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
 @click.option('--samecourt/--no-samecourt', default=True, help='whether to look for topN only in same court')
-def cli_case_recall(cases: Tuple[int], court: Tuple[Court], numtrials: int, samecourt: bool):
+def cli_case_recall(cases: Tuple[int], court: Tuple[Court], numtrials: int, samecourt: bool, strategy: CaseRecommendation.Strategy):
+    if strategy == CaseRecommendation.Strategy.N2V:
+        raise NotImplementedError("Cannot currently measure recall for n2v!")
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
-    case_recall = CaseRecall(citation_network).case_recall(cases, court, numtrials, samecourt)
+    case_recall = CaseRecall(citation_network).case_recall(cases, court, numtrials, samecourt, strategy=strategy)
 
 
 @stats.command(name='randrecall', help='Measure quality of recommendations for a set of random cases.')
 @click.option('-c', '--num-cases', default=20, help='Number of cases to test recall for.')
 @click.option('-t', '--num-trials', default=5, help='Number of trials to do for a court.')
+@click.option('-s', '--strategy', default='rwalk', show_default=True, help='Strategy for recommendation, can be rwalk or n2v.')
 @click.option('--same-court/--no-same-court', default=True, help='whether to look for topN only in same court')
-def cli_case_recall(num_cases: int, num_trials: int, same_court: bool):
+def cli_case_recall(num_cases: int, num_trials: int, same_court: bool, strategy: CaseRecommendation.Strategy):
+    if strategy == CaseRecommendation.Strategy.N2V:
+        raise NotImplementedError("Cannot currently measure recall for n2v!")
     citation_network = CitationNetwork.get_citation_network(enable_caching=True)
     # TODO: Use what is returned to make output rather than printing inside of CaseRecall
-    case_recall = CaseRecall(citation_network).case_recall(num_cases, (), num_trials, same_court)
+    case_recall = CaseRecall(citation_network).case_recall(num_cases, (), num_trials, same_court, strategy=strategy)

@@ -6,6 +6,7 @@ from algorithms.helpers import top_n
 from utils.logger import Logger
 from db.sqlalchemy.models import Court
 from enum import Enum
+from typing import Callable
 
 MAX_NUM_STEPS = 200_000
 MAX_WALK_LENGTH = 5
@@ -17,18 +18,21 @@ class CaseRecommendation:
     citation_network: CitationNetwork
     random_walker: RandomWalker
 
-    class Strategy(Enum):
-        N2V = CaseRecommendation.n2v
-        RWALK = CaseRecommendation.rwalk
+    class Strategy(str, Enum):
+        N2V = "n2v"
+        RWALK = "rwalk"
 
     def __init__(self, citation_network: CitationNetwork):
         self.citation_network = citation_network
         self.random_walker = RandomWalker(self.citation_network)
 
-    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court], strategy: CaseRecommendation.Strategy=CaseRecommendation.Strategy.RWALK):
-        return strategy(self, opinion_ids, num_recommendations, courts)
+    def recommendations(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court], strategy: Strategy=Strategy.RWALK, **kwargs):
+        if strategy == CaseRecommendation.Strategy.RWALK:
+            return self.rwalk(opinion_ids, num_recommendations, courts, **kwargs)
+        else:
+            return self.n2v(opinion_ids, num_recommendations, courts, **kwargs)
 
-    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]) \
+    def n2v(self, opinion_ids: frozenset, num_recommendations, courts: frozenset[Court]=None) \
             -> Dict[int, float]:
         """
         Recommendations powered by Node2Vec network embeddings

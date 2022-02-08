@@ -33,7 +33,7 @@ class CaseRecall:
         self.citation_network = citation_network
         self.recommendation = CaseRecommendation(self.citation_network)
 
-    def case_recall(self, cases: (Tuple[int], int), court: Tuple[Court], num_trials: int, same_court: bool):
+    def case_recall(self, cases: (Tuple[int], int), court: Tuple[Court], num_trials: int, same_court: bool, strategy: CaseRecommendation.Strategy=CaseRecommendation.Strategy.RWALK):
         if isinstance(cases, int):
             num_cases = cases
             cases = []
@@ -60,7 +60,7 @@ class CaseRecall:
                     self.citation_network.network_edge_list.node_metadata[removed].court,) if same_court else ()
                 recommendations = list(
                     self.recommendation.recommendations(frozenset(out_neighbors), 20, courts=frozenset(court + same_court),
-                                                        ignore_opinion_ids=frozenset([c]), before_year=md.year).keys())
+                                                        ignore_opinion_ids=frozenset([c]), strategy=strategy, before_year=md.year).keys())
                 if removed in recommendations:
                     top20 += 1
                 if removed in recommendations[:5]:
