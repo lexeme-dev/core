@@ -11,22 +11,20 @@ class ParentheticalProcessor:
     __QUOTE_MODIFICATION = r"(?:added|removed|adopted|(?:in )?(?:the )original|omitted|included|deleted|eliminated|supplied|changed|in \S+|by \S+ court)"
     __DOCUMENT_TYPES = r"(?:opinion|continuance|order|op\.|decision|case|disposition)"
     __OPINION_TYPES = r"(?:separate|supplemental|amended|majority|dissent|dissenting|concurrence|concurring|plurality|unpublished|revised|per curi.m|in.chambers|judgment|joint)"
-    __OPINION_TYPE_MODIFICATION = r"(?:in (?:the )?(?:judgment|result)s?(?: in part)|in result|in part|in relevant part|(?:from|with) .*)"
+    __OPINION_TYPE_MODIFICATION = r"(?:in (?:the )?(?:judgment|result)s?(?: in part)?|in result|in part|in relevant part|(?:from|with) .*)"
     __FULL_OPINION_DESCRIPTOR = (
         f"(?:{__OPINION_TYPES}(?: {__OPINION_TYPE_MODIFICATION})?)"
     )
     __REFERENTIAL = r"(?:quoting|citing|cited in|referencing)"
     __AGGREGATOR_TYPES = r"(?:collecting|reviewing|listing)"
     __HONORIFICS = r"(?:Mr.?|Mister)"
-    __JUDGE_NAME = rf"(?:(?:.{{1,25}}J\.)|(?:{__HONORIFICS} Justice .{{1,25}}),?)"
+    __JUDGE_NAME = rf"(?:(?:.{{1,25}}J\.,?)|(?:{__HONORIFICS} Justice .{{1,25}}),?)"
 
     __SURROUNDING_CHARS = r'[.!;," ]'
 
     PARENTHETICAL_REGEX_BLACKLIST_RULES = [
         r".n banc",  # en banc or in banc
-        f"{__JUDGE_NAME}",  # Scalia, J.
-        f"{__JUDGE_NAME} ?{__FULL_OPINION_DESCRIPTOR}",  # Scalia, J., dissenting; Roberts, C.J., concurring in the judgment
-        f"{__JUDGE_NAME} ?{__FULL_OPINION_DESCRIPTOR} and {__FULL_OPINION_DESCRIPTOR}",  # Scalia, J., dissenting; Roberts, C.J., concurring in part and dissenting in part
+        f"{__JUDGE_NAME}(?: {__FULL_OPINION_DESCRIPTOR})?(?: ?,?and {__FULL_OPINION_DESCRIPTOR})?",  # Scalia, J., dissenting; Roberts, C.J., concurring in the judgment
         f"{__DOCUMENT_TYPES} of .*J.",  # opinion of Breyer, J.; opinion of Scalia and Alito, J.J.
         f"{__OPINION_TYPES}(?: {__DOCUMENT_TYPES})?",  # plurality opinion
         r"dictum|dicta",
