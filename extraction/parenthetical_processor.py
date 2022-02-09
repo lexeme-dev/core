@@ -25,6 +25,7 @@ class ParentheticalProcessor:
     PARENTHETICAL_REGEX_BLACKLIST_RULES = [
         r".n banc",  # en banc or in banc
         f"{__JUDGE_NAME}(?: {__FULL_OPINION_DESCRIPTOR})?(?: ?,?and {__FULL_OPINION_DESCRIPTOR})?",  # Scalia, J., dissenting; Roberts, C.J., concurring in the judgment
+        f"{__FULL_OPINION_DESCRIPTOR}",  # concurring in result
         f"{__DOCUMENT_TYPES} of .*J.",  # opinion of Breyer, J.; opinion of Scalia and Alito, J.J.
         f"{__OPINION_TYPES}(?: {__DOCUMENT_TYPES})?",  # plurality opinion
         r"dictum|dicta",
@@ -40,7 +41,7 @@ class ParentheticalProcessor:
         r".{1,10}\d{4}",  # 2nd Cir. 2019
         r".{1,25} I+",  # Gonzales II
         r".{1,10} (?:Circuit|Cir.)",  # Tenth Circuit, 5th Cir.
-        r'here(?:in)?after ".+?"',  # hereinafter, "Griffin II"
+        r'here(?:in)?after .+"',  # hereinafter, "Griffin II"
         r"\S*",  # Single-word parentheticals, e.g., 'TILA'
     ]
 
