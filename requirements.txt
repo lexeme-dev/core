@@ -25,3 +25,4 @@ setuptools~=49.2.1
 scikit-learn~=1.0.2
 csrgraph~=0.1.28
 black~=22.1.0
+regex~=2022.1.18
