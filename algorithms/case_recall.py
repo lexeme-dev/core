@@ -34,8 +34,9 @@ class CaseRecall:
         self.recommendation = CaseRecommendation(self.citation_network)
 
     def select_random_cases(self, num_cases: int):
+        cases = list(self.citation_network.network_edge_list.node_metadata.keys())
         while num_cases > 0:
-            case = choice(self.citation_network.network_edge_list.edge_list)
+            case = choice(cases)
             case_metadata = self.citation_network.network_edge_list.node_metadata[
                 case
             ]
