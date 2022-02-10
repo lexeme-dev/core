@@ -33,6 +33,18 @@ class CaseRecall:
         self.citation_network = citation_network
         self.recommendation = CaseRecommendation(self.citation_network)
 
+    def select_random_cases(self, num_cases: int):
+        while num_cases > 0:
+            case = choice(self.citation_network.network_edge_list.edge_list)
+            case_metadata = self.citation_network.network_edge_list.node_metadata[
+                case
+            ]
+            if (
+                case_metadata.end - case_metadata.end_in_neighbors >= 5
+            ):  # Must have at least 5 outbound citations
+                yield case
+                num_cases -= 1
+
     def case_recall(
         self,
         cases: (Tuple[int], int),
@@ -42,22 +54,14 @@ class CaseRecall:
         strategy: CaseRecommendation.Strategy = CaseRecommendation.Strategy.RWALK,
     ):
         if isinstance(cases, int):
-            num_cases = cases
-            cases = []
-            while len(cases) < num_cases:
-                case = choice(self.citation_network.network_edge_list.edge_list)
-                case_metadata = self.citation_network.network_edge_list.node_metadata[
-                    case
-                ]
-                if (
-                    case_metadata.end - case_metadata.end_in_neighbors >= 5
-                ):  # Must have at least 5 outbound citations
-                    cases.append(case)
+            cases = self.select_random_cases(cases)
         overall_top1 = 0
         overall_top5 = 0
         overall_top20 = 0
         recall_results = []
+        num_cases = 0
         for c in cases:
+            num_cases += 1
             md = self.citation_network.network_edge_list.node_metadata[c]
             out_neighbors = list(
                 self.citation_network.network_edge_list.edge_list[
@@ -107,12 +111,12 @@ class CaseRecall:
             print(
                 f"For case {c} after {num_trials} trials:\n\ttop1: {top1}\n\ttop5: {top5}\n\ttop20: {top20}"
             )
-        overall_top1 = 100 * overall_top1 / (num_trials * len(cases))
-        overall_top5 = 100 * overall_top5 / (num_trials * len(cases))
-        overall_top20 = 100 * overall_top20 / (num_trials * len(cases))
+        overall_top1 = 100 * overall_top1 / (num_trials * num_cases)
+        overall_top5 = 100 * overall_top5 / (num_trials * num_cases)
+        overall_top20 = 100 * overall_top20 / (num_trials * num_cases)
         # TODO: Remove print statements and use returned dataclasses to output results from the CLI
         print(
-            f"For {len(cases)} cases after {num_trials} trials each:\n\ttop1: {overall_top1}%\n\ttop5: {overall_top5}%\n\ttop20: {overall_top20}%"
+            f"For {num_cases} cases after {num_trials} trials each:\n\ttop1: {overall_top1}%\n\ttop5: {overall_top5}%\n\ttop20: {overall_top20}%"
         )
         return OverallRecallResult(
             recall_results, num_trials, overall_top1, overall_top5, overall_top20
