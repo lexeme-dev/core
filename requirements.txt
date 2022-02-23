@@ -24,4 +24,5 @@ scikit-learn~=1.0.2
 csrgraph~=0.1.28
 black~=22.1.0
 regex~=2022.1.18
+nltk~=3.7
 datasketch~=1.5.7
