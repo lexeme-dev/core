@@ -3,7 +3,7 @@ import regex
 
 # noinspection RegExpUnnecessaryNonCapturingGroup,SpellCheckingInspection
 class ParentheticalProcessor:
-    __MODIFIABLE = r"(?:omissions?|quotations?|quotes?|headings?|(?:quotations? )?marks?|ellips.s|cites?|citations?|emphas.s|italics?|footnotes?|alterations?|punctuation|modifications?|brackets?|bracketed material|formatting)"
+    __MODIFIABLE = r"(?:omissions?|quotations?|quotes?|headings?|(?:quotations? )?\Wmarks|ellips.s|cites?|citations?|emphas.s|italics?|footnotes?|alterations?|punctuation|modifications?|brackets?|bracketed material|formatting)"
     __MODIFABLE_TYPE = r"(?:internal|former|latter|first|second|last|some|further|certain|numbered|other|transcript)"
     __FULL_MODIFIABLE = f"(?:(?:{__MODIFABLE_TYPE} )?{__MODIFIABLE})"
     __QUOTE_MODIFICATION = r"(?:added|provided|removed|adopted|(?:in )?(?:the )original|omitted|included|deleted|eliminated|altered|modified|supplied|ours|mine|changed|(?:in|by) \S+|by \S+ court)"
@@ -18,6 +18,8 @@ class ParentheticalProcessor:
     __HONORIFICS = r"(?:Mr.?|Mister)"
     __JUDGE_NAME = rf"(?:(?:.{{1,25}}J\.,?)|(?:{__HONORIFICS} Justice .{{1,25}})|the Court|(?:.{{1,25}}Circuit Justice),?)"
 
+    _FUZZY_MODIFIABLE = rf"(?=.*{__MODIFIABLE}.*).{{1,75}}"
+
     __SURROUNDING_CHARS = r'[.!;," ]'
 
     PARENTHETICAL_REGEX_BLACKLIST_RULES = [
@@ -26,13 +28,16 @@ class ParentheticalProcessor:
         f"(?:{__DOCUMENT_TYPES} )?{__FULL_OPINION_DESCRIPTOR}",  # concurring in result
         f"{__DOCUMENT_TYPES} of {__JUDGE_NAME}",  # opinion of Breyer, J.; opinion of Scalia and Alito, J.J.
         f"{__OPINION_TYPES}(?: {__DOCUMENT_TYPES})?(?: {__OPINION_TYPE_MODIFICATION})?",  # plurality opinion
+        rf"({__DOCUMENT_TYPES} )?opinion.*",
+        f"{__JUDGE_NAME}.{{1,50}}",
         r"dictum|dicta",
+        r"standard of review",
         r"on rehearing|denying cert(iorari)?",
         r"simplified|cleaned up|as amended",
         r"same|similar|contra",
         r"(?:and )?cases cited therein",
         r"No. \d+.?\d+",  # No. 12-456
-        r"n. \d+",  # n. 6
+        r"f?n. \d+",  # n. 6
         f"{__DOCUMENT_TYPES} below",  # case below
         f"{__AGGREGATOR_TYPES} {__DOCUMENT_TYPES}s?",  # collecting cases, reviewing cases
         f"(?:{__OPINION_TYPES} )?table(?: {__DOCUMENT_TYPES})?",
@@ -40,6 +45,7 @@ class ParentheticalProcessor:
         f"{__FULL_MODIFIABLE} and {__FULL_MODIFIABLE} {__QUOTE_MODIFICATION}",
         f"{__FULL_MODIFIABLE} {__QUOTE_MODIFICATION}[;,] ?{__FULL_MODIFIABLE} {__QUOTE_MODIFICATION}",
         f"(?:{__MODIFABLE_TYPE} )?{__MODIFIABLE}, {__MODIFIABLE}, and {__MODIFIABLE} {__QUOTE_MODIFICATION}",
+        f"{_FUZZY_MODIFIABLE}",
         f"{__REFERENTIAL} .*",  # citing Gonzales v. Raich, 123 U.S. 456 (2019). A tad over-inclusive but very helpful
         r".{1,10}\d{4}",  # 2nd Cir. 2019
         r".{1,25} I+",  # Gonzales II
