@@ -5,16 +5,16 @@ from typing import DefaultDict, List
 from uuid import uuid4
 
 from datasketch import MinHash, MinHashLSH
-from nltk import bigrams, trigrams, word_tokenize
+from nltk import bigrams, word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 
 from utils.io import get_full_path
 
-with open(get_full_path("data/parentheticals/bell_parentheticals_cl.json")) as f:
+with open(get_full_path("data/parentheticals/brady_parentheticals_cl.json")) as f:
     parentheticals = json.load(f)
 
-stop_words = set(stopwords.words('english'))
+stop_words = set(stopwords.words("english"))
 stemmer = PorterStemmer()
 
 id_text_dict = dict()
@@ -23,11 +23,13 @@ counter = 1
 lsh = MinHashLSH(threshold=0.25, num_perm=128)
 for text in parentheticals:
     mhash = MinHash(num_perm=128)
-    cleaned_text = re.sub(r'[^A-Za-z0-9 ]+', '', text)
+    cleaned_text = re.sub(r"[^A-Za-z0-9 ]+", "", text)
 
-    tokens = [stemmer.stem(word) for word in word_tokenize(cleaned_text)
-              if word not in stop_words
-              ]
+    tokens = [
+        stemmer.stem(word)
+        for word in word_tokenize(cleaned_text)
+        if word not in stop_words
+    ]
     print(" ".join(tokens))
     word_bigrams = [" ".join(gram) for gram in bigrams(tokens)]
     mhash.update_batch([gram.encode("utf-8") for gram in word_bigrams])
