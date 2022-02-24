@@ -15,9 +15,9 @@ with open(get_full_path("data/parentheticals/bell_parentheticals_cl.json")) as f
 id_text_dict = dict()
 id_hash_dict = dict()
 counter = 1
-lsh = MinHashLSH(threshold=0.5, num_perm=128)
+lsh = MinHashLSH(threshold=0.33, num_perm=128)
 for text in parentheticals:
-    text_bigrams = [" ".join(words) for words in bigrams(wordpunct_tokenize(text))]
+    # text_bigrams = [" ".join(words) for words in bigrams(wordpunct_tokenize(text))]
     mhash = MinHash(num_perm=128)
     mhash.update_batch([gram.encode("utf-8") for gram in text.split()])
     text_id = uuid4().hex
@@ -55,5 +55,7 @@ for cluster in clusters:
     text_clusters.append([id_text_dict[id] for id in cluster])
 text_clusters.sort(key=lambda cl: len(cl), reverse=True)
 
+for cl in text_clusters:
+    print(f"{cl[0]} - {len(cl)}")
 
 print("Breakpoint here")
