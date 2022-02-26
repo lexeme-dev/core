@@ -11,7 +11,7 @@ from nltk.corpus import stopwords
 
 from utils.io import get_full_path
 
-with open(get_full_path("data/parentheticals/brady_parentheticals_cl.json")) as f:
+with open(get_full_path("data/parentheticals/cl/miranda.json")) as f:
     parentheticals = json.load(f)
 
 stop_words = set(stopwords.words("english"))
@@ -20,7 +20,9 @@ stemmer = PorterStemmer()
 id_text_dict = dict()
 id_hash_dict = dict()
 counter = 1
-lsh = MinHashLSH(threshold=0.25, num_perm=128)
+lsh = MinHashLSH(threshold=0.3, num_perm=128)
+
+print("Cleaned and stemmed input:")
 for text in parentheticals:
     mhash = MinHash(num_perm=128)
     cleaned_text = re.sub(r"[^A-Za-z0-9 ]+", "", text)
@@ -32,7 +34,7 @@ for text in parentheticals:
     ]
     print(" ".join(tokens))
     word_bigrams = [" ".join(gram) for gram in bigrams(tokens)]
-    mhash.update_batch([gram.encode("utf-8") for gram in word_bigrams])
+    mhash.update_batch([gram.encode("utf-8") for gram in tokens])
     text_id = uuid4().hex
     id_text_dict[text_id] = text
     id_hash_dict[text_id] = mhash
@@ -68,7 +70,8 @@ for cluster in clusters:
     text_clusters.append([id_text_dict[id] for id in cluster])
 text_clusters.sort(key=lambda cl: len(cl), reverse=True)
 
+print("\nClusters (representative parenthetical - size):")
 for cl in text_clusters:
     print(f"{cl[0]} - {len(cl)}")
 
-print("Breakpoint here")
+print("\nBreakpoint here")

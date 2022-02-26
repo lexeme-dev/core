@@ -2,6 +2,7 @@
 from enum import Enum
 from typing import Tuple
 from sqlalchemy import (
+    desc,
     BigInteger,
     Column,
     Float,
@@ -15,6 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Query, aliased, relationship, deferred
 from sqlalchemy.sql import Alias
 
@@ -194,10 +196,11 @@ class Opinion(Base):
         primaryjoin="Opinion.resource_id == CitationContext.cited_opinion_id",
         backref="cited_opinion",
     )
-    opinion_parentheticals = relationship(
+    parentheticals = relationship(
         "OpinionParenthetical",
         primaryjoin="Opinion.resource_id == OpinionParenthetical.cited_opinion_id",
         backref="cited_opinion",
+        order_by="desc(OpinionParenthetical.score)"
     )
 
 
@@ -217,6 +220,7 @@ class OpinionParenthetical(Base):
         Integer, ForeignKey("opinion.resource_id"), index=True, nullable=False
     )
     text = Column(Text, nullable=False)
+    score = Column(Float, nullable=True)
 
 
 class CitationContext(Base):
